@@ -15,13 +15,13 @@ import pickle
 import cv2
 from lesson_functions35 import *
 
-orient = 9  # HOG orientations
-pix_per_cell = 8  # HOG pixels per cell
-cell_per_block = 2  # HOG cells per block
-spatial_size = (16, 16)  # Spatial binning dimensions
-hist_bins = 16    # Number of histogram bins
-# spatial_feat = True  # Spatial features on or off
-# hog_feat = True  # HOG features on or off
+# orient = 9  # HOG orientations
+# pix_per_cell = 8  # HOG pixels per cell
+# cell_per_block = 2  # HOG cells per block
+# spatial_size = (16, 16)  # Spatial binning dimensions
+# hist_bins = 16    # Number of histogram bins
+# # spatial_feat = True  # Spatial features on or off
+# # hog_feat = True  # HOG features on or off
 
 dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
 svc = dist_pickle["svc"]
@@ -31,6 +31,14 @@ pix_per_cell = dist_pickle["pix_per_cell"]
 cell_per_block = dist_pickle["cell_per_block"]
 spatial_size = dist_pickle["spatial_size"]
 hist_bins = dist_pickle["hist_bins"]
+
+print('svc: ', svc)
+print('X_scaler: ', X_scaler)
+print('orient: ', orient)
+print('pix_per_cell: ', pix_per_cell)
+print('cell_per_block: ', cell_per_block)
+print('spatial_size: ', spatial_size)
+print('hist_bins: ', hist_bins)
 
 
 # Define a single function that can extract features using hog

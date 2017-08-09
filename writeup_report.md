@@ -1,10 +1,13 @@
-Preperation
--------------
+Vehicle Detection Project
+--------------------------------
 
-# Dataset
+# 1. Dataset Prepaeration
 
-## Project Dataset
+## 1.1 Project Dataset provided by Udacity
 Here are links to the labeled data for vehicle and non-vehicle examples to train your classifier. 
+
+- https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles_smallset.zip
+- https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles_smallset.zip
 - https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles.zip
 - https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles.zip
 
@@ -13,18 +16,58 @@ These example images come from a combination of the GTI vehicle image database, 
 - http://www.cvlibs.net/datasets/kitti/
 and examples extracted from the project video itself. 
 
-## Udacity labeled dataset
+- Udacity labeled dataset
 You are welcome and encouraged to take advantage of the recently released Udacity labeled dataset to augment your training data.
 - https://github.com/udacity/self-driving-car/tree/master/annotations
 
-### Crowdai Dataset [CrowdAI](http://crowdai.com/)
+## 1.2 [CrowdAI](http://crowdai.com/) Dataset
 imagedata http://bit.ly/udacity-annoations-crowdai
 
 annotation list
 https://github.com/udacity/self-driving-car/blob/master/annotations/labels_crowdai.csv
 
-### Autti Dataset [Autti](http://autti.co/)
+## 1.3 [Autti](http://autti.co/) Dataset
 http://bit.ly/udacity-annotations-autti
+
+
+## 1.4 Selecting Labeled Dataset
+
+TODO ここから書く
+
+データセットの比較の筆画
+
+数、ラベル、備考
+
+まずは smallsetで実験
+
+
+### 1.4.1 
+
+
+# 2. HOG feature and Other Features to Detect Vehicles
+
+## Option
+- color transform 
+- binned color features
+- histograms of color
+
+# 3. Training with Linear SVM classifier
+# 4. Sliding-Window Technique and Vehicle Tracking
+# 5. Rejecting Outliers and follow detected vehicles.
+Heat-map Creation of recurring detections frame by frame 
+rejecting outliers and follow detected vehicles.
+Estimate a bounding box for vehicles detected.
+
+# 6. Run pipeline on a video stream
+start with the test_video.mp4 and later implement on full project_video.mp4
+
+# 7. Conclusion and Discussion
+
+
+
+  ** Don't forget to normalize your features and randomize **
+
+# Sample Writeup
 
 ## test_images:
 Some example images for testing your pipeline on single frames are located in the test_images folder. 
@@ -34,7 +77,7 @@ To help the reviewer examine your work,
 please save examples of the output from each stage of your pipeline in the folder called ouput_images, 
 and include them in your writeup for the project by describing what each image shows. 
 
-## inout videos
+## input videos
 The video called project_video.mp4 is the video your pipeline should work well on.
 
 As an optional challenge Once you have a working pipeline for vehicle detection, 
@@ -44,31 +87,6 @@ If you're feeling ambitious (also totally optional though),
 don't stop there! We encourage you to go out and take video of your own, 
 and show us how you would implement this project on a new video!
 
-
-
-
-**Vehicle Detection Project**
-
-# step
-- labeled dataset
-- HOG feature
-- Linear SVM classifier
-- training
-- sliding-window technique
-- Run pipeline on a video stream
--   (start with the test_video.mp4 and later implement on full project_video.mp4)
-- create a heat map of recurring detections frame by frame 
-- reject outliers and follow detected vehicles.
-- Estimate a bounding box for vehicles detected.
-
-# Option
-- color transform 
-- binned color features
-- histograms of color
-
-  ** Don't forget to normalize your features and randomize **
-
-# Writeup
 
 [//]: # (Image References)
 [image1]: ./examples/car_not_car.png
