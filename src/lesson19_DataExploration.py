@@ -1,10 +1,7 @@
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
-#import cv2
 import glob
-#from skimage.feature import hog
-#from skimage import color, exposure
 # images are divided up into vehicles and non-vehicles
 
 images = glob.glob('dataset/*/*/*.jpeg')

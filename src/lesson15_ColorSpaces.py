@@ -4,8 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+
 def plot3d(pixels, colors_rgb,
-        axis_labels=list("RGB"), axis_limits=[(0, 255), (0, 255), (0, 255)]):
+           axis_labels=list("RGB"), axis_limits=[(0, 255), (0, 255), (0, 255)]):
     """Plot pixels in 3D."""
 
     # Create figure and 3D axes
@@ -32,15 +33,18 @@ def plot3d(pixels, colors_rgb,
 
     return ax  # return Axes3D object for further manipulation
 
+
 # Read a color image
 img = cv2.imread("../test_images/test1.jpg")
 
 # Select a small fraction of pixels to plot by subsampling it
 scale = max(img.shape[0], img.shape[1], 64) / 64  # at most 64 rows and columns
-img_small = cv2.resize(img, (np.int(img.shape[1] / scale), np.int(img.shape[0] / scale)), interpolation=cv2.INTER_NEAREST)
+img_small = cv2.resize(img, (np.int(
+    img.shape[1] / scale), np.int(img.shape[0] / scale)), interpolation=cv2.INTER_NEAREST)
 
 # Convert subsampled image to desired color space(s)
-img_small_RGB = cv2.cvtColor(img_small, cv2.COLOR_BGR2RGB)  # OpenCV uses BGR, matplotlib likes RGB
+# OpenCV uses BGR, matplotlib likes RGB
+img_small_RGB = cv2.cvtColor(img_small, cv2.COLOR_BGR2RGB)
 img_small_HSV = cv2.cvtColor(img_small, cv2.COLOR_BGR2HSV)
 img_small_rgb = img_small_RGB / 255.  # scaled to [0, 1], only for plotting
 
