@@ -2,13 +2,14 @@
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 import cv2
 import glob
 import time
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
 from skimage.feature import hog
-from lesson_functions import *
+from lesson_functions34 import *
 # NOTE: the next import is only valid for scikit-learn version <= 0.17
 # for scikit-learn >= 0.18 use:
 # from sklearn.model_selection import train_test_split
@@ -97,7 +98,7 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
     
     
 # Read in cars and notcars
-images = glob.glob('dataset/*/*/*.jpeg')
+images = glob.glob('dataset/*_smallset/*/*.jpeg')
 
 cars = []
 notcars = []
@@ -109,9 +110,9 @@ for image in images:
 
 # Reduce the sample size because
 # The quiz evaluator times out after 13s of CPU time
-sample_size = 500
-cars = cars[0:sample_size]
-notcars = notcars[0:sample_size]
+# sample_size = 500
+# cars = cars[0:sample_size]
+# notcars = notcars[0:sample_size]
 
 ### TODO: Tweak these parameters and see how the results change.
 color_space = 'RGB' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -126,18 +127,28 @@ hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
 y_start_stop = [None, None] # Min and max in y to search in slide_window()
 
-car_features = extract_features(cars, color_space=color_space, 
-                        spatial_size=spatial_size, hist_bins=hist_bins, 
-                        orient=orient, pix_per_cell=pix_per_cell, 
-                        cell_per_block=cell_per_block, 
-                        hog_channel=hog_channel, spatial_feat=spatial_feat, 
-                        hist_feat=hist_feat, hog_feat=hog_feat)
-notcar_features = extract_features(notcars, color_space=color_space, 
-                        spatial_size=spatial_size, hist_bins=hist_bins, 
-                        orient=orient, pix_per_cell=pix_per_cell, 
-                        cell_per_block=cell_per_block, 
-                        hog_channel=hog_channel, spatial_feat=spatial_feat, 
-                        hist_feat=hist_feat, hog_feat=hog_feat)
+car_features = extract_features(cars,
+                                color_space=color_space, 
+                                spatial_size=spatial_size,
+                                hist_bins=hist_bins, 
+                                orient=orient,
+                                pix_per_cell=pix_per_cell, 
+                                cell_per_block=cell_per_block, 
+                                hog_channel=hog_channel,
+                                spatial_feat=spatial_feat, 
+                                hist_feat=hist_feat,
+                                hog_feat=hog_feat)
+notcar_features = extract_features(notcars,
+                                   color_space=color_space, 
+                                   spatial_size=spatial_size,
+                                   hist_bins=hist_bins, 
+                                   orient=orient,
+                                   pix_per_cell=pix_per_cell, 
+                                   cell_per_block=cell_per_block, 
+                                   hog_channel=hog_channel,
+                                   spatial_feat=spatial_feat, 
+                                   hist_feat=hist_feat,
+                                   hog_feat=hog_feat)
 
 X = np.vstack((car_features, notcar_features)).astype(np.float64)                        
 # Fit a per-column scaler
@@ -169,8 +180,19 @@ print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 # Check the prediction time for a single sample
 t=time.time()
 
+dist_pickle = {}
+dist_pickle["svc"] = svc
+dist_pickle["scaler"] = X_scaler
+dist_pickle["orient"] = orient
+dist_pickle["pix_per_cell"] = pix_per_cell
+dist_pickle["cell_per_block"] = cell_per_block
+dist_pickle["spatial_size"] = spatial_size
+dist_pickle["hist_bins"] = hist_bins
+pickle.dump( dist_pickle, open("svc_pickle.p", "wb"))
+
+
 # image = mpimg.imread('bbox-example-image.jpg')
-image = mpimg.imread('../examples/output_bboxes.png')
+image = mpimg.imread('../test_images/test1.jpg')
 
 draw_image = np.copy(image)
 
@@ -192,5 +214,4 @@ hot_windows = search_windows(image, windows, svc, X_scaler, color_space=color_sp
 window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)                    
 
 plt.imshow(window_img)
-
-
+plt.show()

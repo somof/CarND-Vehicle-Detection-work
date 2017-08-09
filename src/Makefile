@@ -10,7 +10,8 @@ endif
 
 
 all: 
-	${PYTHONC} lesson34_SearchandClassify.py
+	#${PYTHONC} lesson34_SearchandClassify_NotWork.py
+	${PYTHONC} lesson35_HogSub-samplingWindowSearch.py
 	#${PYTHONC} lesson28_ColorClassify.py
 	#${PYTHONC} lesson22_CombineAndNormalizeFeatures.py
 	#${PYTHONC} lesson20_scikit-HOG.py
