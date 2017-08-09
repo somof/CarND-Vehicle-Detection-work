@@ -15,6 +15,14 @@ import pickle
 import cv2
 from lesson_functions35 import *
 
+orient = 9  # HOG orientations
+pix_per_cell = 8  # HOG pixels per cell
+cell_per_block = 2  # HOG cells per block
+spatial_size = (16, 16)  # Spatial binning dimensions
+hist_bins = 16    # Number of histogram bins
+# spatial_feat = True  # Spatial features on or off
+# hog_feat = True  # HOG features on or off
+
 dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
 svc = dist_pickle["svc"]
 X_scaler = dist_pickle["scaler"]
@@ -88,8 +96,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             hist_features = color_hist(subimg, nbins=hist_bins)
 
             # Scale features and make a prediction
-            test_features = X_scaler.transform(
-                np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
+            test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
             # test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
             test_prediction = svc.predict(test_features)
 
@@ -106,7 +113,6 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
 ystart = 400
 ystop = 656
 scale = 1.5
-scale = 1
 
 for no in range(1, 7):
     file = '../test_images/test{}.jpg'.format(no)
