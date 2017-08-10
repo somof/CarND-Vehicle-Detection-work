@@ -10,9 +10,10 @@ endif
 
 
 all: 
+	${PYTHONC} lesson37_MultipleDetections.py
 	#${PYTHONC} lesson34_SearchandClassify_NotWork.py
 	#${PYTHONC} lesson34_SearchandClassify_NotWork_load.py
-	${PYTHONC} lesson35_HogSub-samplingWindowSearch.py
+	#${PYTHONC} lesson35_HogSub-samplingWindowSearch.py
 	#${PYTHONC} lesson28_ColorClassify.py
 	#${PYTHONC} lesson22_CombineAndNormalizeFeatures.py
 	#${PYTHONC} lesson20_scikit-HOG.py
@@ -21,7 +22,8 @@ all:
 	#${PYTHONC} lesson15_ColorSpaces.py
 
 run: 
-	${PYTHONC} project_pipeline_adv.py
+	#${PYTHONC} project_training.py
+	${PYTHONC} project_pipeline.py
 
 video:
 	${PYTHONC} project_pipeline_video.py

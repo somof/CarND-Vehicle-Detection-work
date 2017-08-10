@@ -6,6 +6,7 @@ from moviepy.editor import VideoFileClip
 import pickle
 
 from functions_vehicle import *
+# from functions_heatmap import *
 
 
 color_space = 'RGB'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -14,7 +15,7 @@ pix_per_cell = 8  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
 hog_channel = 'ALL'  # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16)  # Spatial binning dimensions
-hist_bins = 32  #16    # Number of histogram bins
+hist_bins = 12  # 16    # Number of histogram bins
 spatial_feat = True  # Spatial features on or off
 hist_feat = True  # Histogram features on or off
 hog_feat = True  # HOG features on or off
@@ -62,7 +63,7 @@ for file in ('test_video.mp4', 'project_video.mp4'):
 
     frameno = 0
     for frame in clip1.iter_frames():
-        if frameno % 1 == 0 and frameno < 1500:
+        if frameno % 4 == 0 and frameno < 1500:
         # if (frameno % 4 == 0 and
         #     ((470 <= frameno and frameno < 610) or
         #      (950 <= frameno and frameno < 1150))):
