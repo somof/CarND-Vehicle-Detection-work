@@ -18,7 +18,7 @@ hist_bins = dist_pickle["hist_bins"]
 
 ystart = 400
 ystop = 656
-scale = 1.5
+scale = 2  # 1.5
 
 print('svc: ', svc)
 print('X_scaler: ', X_scaler)
@@ -32,10 +32,15 @@ print('hist_bins: ', hist_bins)
 def process_image(image, weight=0.5):
 
     # 8) Vehicles Detection
+
     # result = find_cars(image, ystart, ystop, scale, svc, X_scaler,
     #                    orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    result = find_cars_heatmap(image, ystart, ystop, scale, svc, X_scaler,
-                               orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
+    # result = find_cars_heatmap(image, ystart, ystop, scale, svc, X_scaler,
+    #                            orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
+    result = find_cars_multiscale(image, ystart, ystop, scale, svc, X_scaler,
+                                  orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
     # return cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
     return result

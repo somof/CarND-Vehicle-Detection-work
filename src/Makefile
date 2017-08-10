@@ -22,7 +22,7 @@ all:
 	#${PYTHONC} lesson15_ColorSpaces.py
 
 run: 
-	#${PYTHONC} project_training.py
+	${PYTHONC} project_training.py
 	${PYTHONC} project_pipeline.py
 
 video:
