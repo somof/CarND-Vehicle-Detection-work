@@ -82,10 +82,12 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
         if spatial_feat is True:
             spatial_features = bin_spatial(feature_image, size=spatial_size)
             file_features.append(spatial_features)
+
         if hist_feat is True:
             # Apply color_hist()
             hist_features = color_hist(feature_image, nbins=hist_bins)
             file_features.append(hist_features)
+
         if hog_feat is True:
             # Call get_hog_features() with vis=False, feature_vec=True
             if hog_channel == 'ALL':
@@ -100,6 +102,7 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
                                                 pix_per_cell, cell_per_block, vis=False, feature_vec=True)
             # Append the new feature vector to the features list
             file_features.append(hog_features)
+
         features.append(np.concatenate(file_features))
     # Return list of feature vectors
     return features

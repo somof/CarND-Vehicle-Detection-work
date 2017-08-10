@@ -46,6 +46,21 @@ TODO ここから書く
 
 # 2. HOG feature and Other Features to Detect Vehicles
 
+
+- For each channel and with your HOG parameters above, the HOG feature vector is 1764 long
+- The spatial binning feature vector is 32 x 32 x 3 = 3072 long -> 16 x 16 x 3 = 768
+- The histogram feature vector is 32 x 3 = 96
+- Therefore, using only 1 HOG channel gives you a 1764 + 3072 + 96 = 4932 vector.
+  This is one of the dimensions quoted by the error message.
+- But your find_cars() function uses all 3 HOG channels -- see these lines:
+
+Therefore the resulting HOG feature vector is 1764 x 3 = 5292. 
+Add to that the spatial and histogram features and you get 5292 + 3072 + 96 = 8460, 
+which is the other number quoted by the error message.
+
+
+
+
 ## Option
 - color transform 
 - binned color features
@@ -60,6 +75,26 @@ Estimate a bounding box for vehicles detected.
 
 # 6. Run pipeline on a video stream
 start with the test_video.mp4 and later implement on full project_video.mp4
+
+## Udacity provided Video
+
+test_video.mp4
+
+project_video.mp4
+
+## Hakone Video
+
+60MB 比較的車が多い
+LegacyVideo_05_40_20170725_135613.mp4
+
+205MB 後半に工事車両
+LegacyVideo_05_40_20170725_140502
+
+621MB 霧、ワイパー
+LegacyVideo_05_40_20170725_144407
+
+
+
 
 # 7. Conclusion and Discussion
 

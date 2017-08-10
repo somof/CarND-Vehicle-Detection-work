@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import cv2
+from sklearn.preprocessing import StandardScaler
 from lesson_functions35 import *
 
 # orient = 9  # HOG orientations
@@ -22,6 +23,19 @@ from lesson_functions35 import *
 # hist_bins = 16    # Number of histogram bins
 # # spatial_feat = True  # Spatial features on or off
 # # hog_feat = True  # HOG features on or off
+
+color_space = 'RGB'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+orient = 9  # HOG orientations
+pix_per_cell = 8  # HOG pixels per cell
+cell_per_block = 2  # HOG cells per block
+hog_channel = 0  # Can be 0, 1, 2, or "ALL"
+spatial_size = (16, 16)  # Spatial binning dimensions
+hist_bins = 32  #16    # Number of histogram bins
+spatial_feat = True  # Spatial features on or off
+hist_feat = True  # Histogram features on or off
+hog_feat = True  # HOG features on or off
+y_start_stop = [None, None]  # Min and max in y to search in slide_window()
+
 
 dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
 svc = dist_pickle["svc"]
@@ -43,7 +57,8 @@ print('hist_bins: ', hist_bins)
 
 # Define a single function that can extract features using hog
 # sub-sampling and make predictions
-def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient,
+              pix_per_cell, cell_per_block, spatial_size, hist_bins):
 
     draw_img = np.copy(img)
     img = img.astype(np.float32) / 255
@@ -112,8 +127,10 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 xbox_left = np.int(xleft * scale)
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
-                cv2.rectangle(draw_img, (xbox_left, ytop_draw + ystart), (xbox_left +
-                                                                          win_draw, ytop_draw + win_draw + ystart), (0, 0, 255), 6)
+                cv2.rectangle(draw_img,
+                              (xbox_left, ytop_draw + ystart),
+                              (xbox_left + win_draw, ytop_draw + win_draw + ystart),
+                              (0, 0, 255), 6)
 
     return draw_img
 

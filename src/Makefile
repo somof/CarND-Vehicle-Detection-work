@@ -11,6 +11,7 @@ endif
 
 all: 
 	#${PYTHONC} lesson34_SearchandClassify_NotWork.py
+	#${PYTHONC} lesson34_SearchandClassify_NotWork_load.py
 	${PYTHONC} lesson35_HogSub-samplingWindowSearch.py
 	#${PYTHONC} lesson28_ColorClassify.py
 	#${PYTHONC} lesson22_CombineAndNormalizeFeatures.py
@@ -20,7 +21,10 @@ all:
 	#${PYTHONC} lesson15_ColorSpaces.py
 
 run: 
-	${PYTHONC} project_code04_7.py
+	${PYTHONC} project_pipeline_adv.py
+
+video:
+	${PYTHONC} project_pipeline_video.py
 
 calib:
 	${PYTHONC} project_code01.py
