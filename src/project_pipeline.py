@@ -3,42 +3,40 @@ import numpy as np
 import cv2
 from moviepy.editor import VideoFileClip
 import pickle
-
-from functions_vehicle import *
-# from functions_heatmap import *
+from functions_vehicle import find_cars_multiscale
 
 dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
-svc = dist_pickle["svc"]
-X_scaler = dist_pickle["scaler"]
-orient = dist_pickle["orient"]
-pix_per_cell = dist_pickle["pix_per_cell"]
+color_space    = dist_pickle["color_space"]
+svc            = dist_pickle["svc"]
+X_scaler       = dist_pickle["scaler"]
+orient         = dist_pickle["orient"]
+pix_per_cell   = dist_pickle["pix_per_cell"]
 cell_per_block = dist_pickle["cell_per_block"]
-spatial_size = dist_pickle["spatial_size"]
-hist_bins = dist_pickle["hist_bins"]
+spatial_size   = dist_pickle["spatial_size"]
+hist_bins      = dist_pickle["hist_bins"]
 
 ystart = 400
 ystop = 656
-scale = 2  # 1.5
+scale = 1.5
 
-print('svc: ', svc)
-print('X_scaler: ', X_scaler)
-print('orient: ', orient)
-print('pix_per_cell: ', pix_per_cell)
-print('cell_per_block: ', cell_per_block)
-print('spatial_size: ', spatial_size)
-print('hist_bins: ', hist_bins)
+print('Restored into pickle:')
+print('  color_space: ', color_space)
+print('  svc: ', svc)
+print('  X_scaler: ', X_scaler)
+print('  orient: ', orient)
+print('  pix_per_cell: ', pix_per_cell)
+print('  cell_per_block: ', cell_per_block)
+print('  spatial_size: ', spatial_size)
+print('  hist_bins: ', hist_bins)
+
+print('Search Parameter:')
+print('  y_start_stop:', ystart, ystop)
+print('  scale:', scale)
 
 
 def process_image(image, weight=0.5):
 
     # 8) Vehicles Detection
-
-    # result = find_cars(image, ystart, ystop, scale, svc, X_scaler,
-    #                    orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-
-    # result = find_cars_heatmap(image, ystart, ystop, scale, svc, X_scaler,
-    #                            orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-
     result = find_cars_multiscale(image, ystart, ystop, scale, svc, X_scaler,
                                   orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
@@ -55,7 +53,7 @@ for file in ('test_video.mp4', 'project_video.mp4'):
 
     frameno = 0
     for frame in clip1.iter_frames():
-        if frameno % 4 == 0 and frameno < 1500:
+        if frameno % 10 == 0 and frameno < 1500:
             # print('frameno: {:5.0f}'.format(frameno))
             result = process_image(frame)
             cv2.imshow('frame', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))

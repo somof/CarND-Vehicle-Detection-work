@@ -10,6 +10,12 @@ endif
 
 
 all: 
+	#${PYTHONC} project_training_work255.py
+	#${PYTHONC} project_training.py
+	#${PYTHONC} project_search_load.py
+	${PYTHONC} project_pipeline.py
+
+lesson:
 	${PYTHONC} lesson37_MultipleDetections.py
 	#${PYTHONC} lesson34_SearchandClassify_NotWork.py
 	#${PYTHONC} lesson34_SearchandClassify_NotWork_load.py
@@ -27,11 +33,3 @@ run:
 
 video:
 	${PYTHONC} project_pipeline_video.py
-
-calib:
-	${PYTHONC} project_code01.py
-
-test:
-#	${PYTHONC} test02.py
-#	${PYTHONC} test01.py
-

@@ -3,7 +3,6 @@ import numpy as np
 import cv2
 from moviepy.editor import VideoFileClip
 import pickle
-
 from functions_vehicle import *
 from functions_lane import *
 
