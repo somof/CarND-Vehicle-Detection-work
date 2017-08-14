@@ -24,7 +24,7 @@ def set_perspective_matrix():
 
     print('Search Area:')
     search_area = []
-    for y in range(8, 26, 2):
+    for y in range(6, 28, 2):
         x = -10
         x0 = (M[0][0] * x + M[0][1] * y + M[0][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
         y0 = (M[1][0] * x + M[1][1] * y + M[1][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
@@ -45,7 +45,7 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
         scale = 1.5
 
         width = area[1][0] - area[0][0]
-        height = int(2.0 * width / 20)
+        height = int(1.5 * width / 20)
 
         xstart = max(0, area[0][0])
         xstop = min(1279, area[1][0])
@@ -75,11 +75,10 @@ def find_cars(img, draw_img,
 
     img_tosearch = img[ystart:ystop, xstart:xstop, :]
 
-    # img_height = img_tosearch.shape[0]
-    # pre_scale = img_height / 64
-    # img_tosearch = cv2.resize(img,
-    #                           (np.int(img_tosearch.shape[1] / pre_scale),
-    #                            np.int(img_tosearch.shape[0] / pre_scale)))
+    # pre_scale = 64 / img_tosearch.shape[0]
+    # img_tosearch = cv2.resize(img_tosearch,
+    #                           (np.int(img_tosearch.shape[1] * pre_scale),
+    #                            np.int(img_tosearch.shape[0] * pre_scale)))
     # print(img_tosearch.shape)
 
     ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
@@ -142,26 +141,8 @@ def find_cars(img, draw_img,
                 xbox_left = np.int(xleft * scale)
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
-                # cv2.rectangle(draw_img,
-                #               (xbox_left, ytop_draw + ystart),
-                #               (xbox_left + win_draw, ytop_draw + win_draw + ystart),
-                #               (0, 0, 255), 1)
-
                 # Add heatmap to each box
                 bbox.append([[xbox_left, ytop_draw + ystart],
                              [xbox_left + win_draw, ytop_draw + win_draw + ystart]])
-
-                # heatmap[ytop_draw + ystart:ytop_draw + win_draw +
-                #         ystart, xbox_left:xbox_left + win_draw] += 1
-
-    # Apply threshold to help remove false positives
-    # threshold = 1
-    # heatmap[heatmap <= threshold] = 0
-
-    # Visualize the heatmap when displaying
-    # img_heatmap = np.clip(heatmap, 0, 255)
-    # # Find final boxes from heatmap using label function
-    # labels = label(img_heatmap)
-    # draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
 
     return draw_img, bbox

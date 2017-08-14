@@ -103,7 +103,7 @@ def process_image(image, weight=0.5):
 
     heatmap = np.zeros_like(image[:, :, 0]).astype(np.float)
     add_heat(heatmap, bbox_list)
-    heatmap = apply_threshold(heatmap, 1)
+    heatmap = apply_threshold(heatmap, 0)
     img_heatmap = np.clip(heatmap, 0, 255)
     labels = label(img_heatmap)
     draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
@@ -137,7 +137,7 @@ cv2.destroyAllWindows()
 clip1 = VideoFileClip('../project_video.mp4')
 frameno = 0
 for frame in clip1.iter_frames():
-    if 150 < frameno and frameno % 8 == 0:
+    if 160 < frameno and frameno % 4 == 0:
         print('frameno: {:5.0f}'.format(frameno))
         result = process_image(frame)
         cv2.imshow('frame', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
