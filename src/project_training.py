@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from functions_training import single_img_features
 
 use_float_image = False
-use_small_sample = True  # False
+use_small_sample = False  # True
 
 filename = 'svc_pickle.'
 if use_float_image:
@@ -32,6 +32,8 @@ pix_per_cell   = 8  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
 spatial_size   = (32, 32)   # (64, 64)  (32, 32)  (16, 16)  # Spatial binning dimensions
 hist_bins      = 64  # 32  # Number of histogram bins
+
+orient         = 11  # HOG orientations
 
 
 # Read in cars and notcars

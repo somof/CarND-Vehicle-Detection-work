@@ -103,7 +103,7 @@ def process_image(image, weight=0.5):
 
     heatmap = np.zeros_like(image[:, :, 0]).astype(np.float)
     add_heat(heatmap, bbox_list)
-    heatmap = apply_threshold(heatmap, 0)
+    heatmap = apply_threshold(heatmap, 1)
     img_heatmap = np.clip(heatmap, 0, 255)
     labels = label(img_heatmap)
     draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)

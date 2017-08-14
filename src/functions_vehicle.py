@@ -24,7 +24,7 @@ def set_perspective_matrix():
 
     print('Search Area:')
     search_area = []
-    for y in range(6, 28, 2):
+    for y in range(5, 24, 1):
         x = -10
         x0 = (M[0][0] * x + M[0][1] * y + M[0][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
         y0 = (M[1][0] * x + M[1][1] * y + M[1][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
@@ -45,7 +45,7 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
         scale = 1.5
 
         width = area[1][0] - area[0][0]
-        height = int(1.5 * width / 20)
+        height = int(1.75 * width / 20)
 
         xstart = max(0, area[0][0])
         xstop = min(1279, area[1][0])
@@ -75,11 +75,12 @@ def find_cars(img, draw_img,
 
     img_tosearch = img[ystart:ystop, xstart:xstop, :]
 
-    # pre_scale = 64 / img_tosearch.shape[0]
-    # img_tosearch = cv2.resize(img_tosearch,
-    #                           (np.int(img_tosearch.shape[1] * pre_scale),
-    #                            np.int(img_tosearch.shape[0] * pre_scale)))
-    # print(img_tosearch.shape)
+    # if 128 < img_tosearch.shape[0]:
+    #     pre_scale = 128 / img_tosearch.shape[0]
+    #     img_tosearch = cv2.resize(img_tosearch,
+    #                               (np.int(img_tosearch.shape[1] * pre_scale),
+    #                                np.int(img_tosearch.shape[0] * pre_scale)))
+    #     # print(img_tosearch.shape)
 
     ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
     if scale != 1:
