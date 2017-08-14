@@ -10,9 +10,8 @@ endif
 
 
 all: 
-	#${PYTHONC} project_training_work255.py
-	#${PYTHONC} project_training.py
-	#${PYTHONC} project_search_load.py
+	${PYTHONC} project_training.py
+	#${PYTHONC} project_search.py
 	${PYTHONC} project_pipeline.py
 
 lesson:

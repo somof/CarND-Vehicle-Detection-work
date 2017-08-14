@@ -1,60 +1,93 @@
 import numpy as np
 import cv2
-from scipy.ndimage.measurements import label
 from functions_training import convert_color
 from functions_training import get_hog_features
 from functions_training import bin_spatial
 from functions_training import color_hist
 
-
-def add_heat(heatmap, bbox_list):
-    # Iterate through list of bboxes
-    for box in bbox_list:
-        # Add += 1 for all pixels inside each bbox
-        # Assuming each "box" takes the form ((x1, y1), (x2, y2))
-        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
-    # Return updated heatmap
-    return heatmap  # Iterate through list of bboxes
+M = []
+Minv = []
+search_area = []
 
 
-def apply_threshold(heatmap, threshold):
-    # Zero out pixels below the threshold
-    heatmap[heatmap <= threshold] = 0
-    # Return thresholded map
-    return heatmap
+def set_perspective_matrix():
+
+    global M, Minv, search_area
+
+    # Calculate the Perspective Transformation Matrix and its invert Matrix
+    perspective_2d = np.float32([[585, 460], [695, 460], [1127, 685], [203, 685]])
+    perspective_3d = np.float32([[-1.85, 30], [1.85, 30], [1.85, 3], [-1.85, 3]])
+    perspective_2d = np.float32([[600, 440], [640, 440], [1105, 675], [295, 675]])  # trial
+    perspective_3d = np.float32([[-1.85, 50], [1.85, 50], [1.85, 5], [-1.85, 5]])
+    M = cv2.getPerspectiveTransform(perspective_3d, perspective_2d)
+    Minv = cv2.getPerspectiveTransform(perspective_2d, perspective_3d)
+
+    print('Search Area:')
+    search_area = []
+    for y in range(8, 26, 2):
+        x = -10
+        x0 = (M[0][0] * x + M[0][1] * y + M[0][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
+        y0 = (M[1][0] * x + M[1][1] * y + M[1][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
+        #
+        x = 10
+        x1 = (M[0][0] * x + M[0][1] * y + M[0][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
+        y1 = (M[1][0] * x + M[1][1] * y + M[1][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
+        #
+        search_area.append([[int(x0), int(y0)], [int(x1), int(y1)]])
+        print('{:3.0f} : ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(y, x0, y0, x1, y1))
 
 
-def draw_labeled_bboxes(img, labels):
-    # Iterate through all detected cars
-    for car_number in range(1, labels[1] + 1):
-        # Find pixels with each car_number label value
-        nonzero = (labels[0] == car_number).nonzero()
-        # Identify x and y values of those pixels
-        nonzeroy = np.array(nonzero[0])
-        nonzerox = np.array(nonzero[1])
-        # Define a bounding box based on min/max x and y
-        bbox = ((np.min(nonzerox), np.min(nonzeroy)),
-                (np.max(nonzerox), np.max(nonzeroy)))
-        # Draw the box on the image
-        cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
-    # Return the image
-    return img
+def find_cars_multiscale(image, draw_img, svc, X_scaler,
+                         orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+
+    bbox_list = []
+    for area in search_area:
+        scale = 1.5
+
+        width = area[1][0] - area[0][0]
+        height = int(2.0 * width / 20)
+
+        xstart = max(0, area[0][0])
+        xstop = min(1279, area[1][0])
+        ystop = area[0][1]
+        ystart = ystop - height
+
+        # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
+        cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (255, 0, 0), 1)
+
+        draw_img, bbox = find_cars(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+                                   orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        if bbox:
+            bbox_list.extend(bbox)
+
+    return draw_img, bbox_list
 
 
-def find_cars_multiscale(img, ystart, ystop, scale, svc, X_scaler,
-                         orient, pix_per_cell, cell_per_block,
-                         spatial_size, hist_bins):
+def find_cars(img, draw_img,
+              ystart, ystop, xstart, xstop, scale,
+              svc, X_scaler,
+              orient, pix_per_cell, cell_per_block,
+              spatial_size, hist_bins):
 
-    draw_img = np.copy(img)
+    # draw_img = np.copy(img)
     # img = img.astype(np.float32) / 255
-    heatmap = np.zeros_like(img[:, :, 0]).astype(np.float)
+    # heatmap = np.zeros_like(img[:, :, 0]).astype(np.float)
 
-    img_tosearch = img[ystart:ystop, :, :]
+    img_tosearch = img[ystart:ystop, xstart:xstop, :]
+
+    # img_height = img_tosearch.shape[0]
+    # pre_scale = img_height / 64
+    # img_tosearch = cv2.resize(img,
+    #                           (np.int(img_tosearch.shape[1] / pre_scale),
+    #                            np.int(img_tosearch.shape[0] / pre_scale)))
+    # print(img_tosearch.shape)
+
     ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
     if scale != 1:
         imshape = ctrans_tosearch.shape
-        ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(
-            imshape[1] / scale), np.int(imshape[0] / scale)))
+        ctrans_tosearch = cv2.resize(ctrans_tosearch,
+                                     (np.int(imshape[1] / scale),
+                                      np.int(imshape[0] / scale)))
 
     ch1 = ctrans_tosearch[:, :, 0]
     ch2 = ctrans_tosearch[:, :, 1]
@@ -68,7 +101,7 @@ def find_cars_multiscale(img, ystart, ystop, scale, svc, X_scaler,
     # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
     window = 64
     nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1  # 7
-    cells_per_step = 2  # Instead of overlap, define how many cells to step
+    cells_per_step = 2  # 2  # Instead of overlap, define how many cells to step
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step  # 76
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step  # 82 | 12
 
@@ -77,6 +110,7 @@ def find_cars_multiscale(img, ystart, ystop, scale, svc, X_scaler,
     hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
     hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
 
+    bbox = []
     for xb in range(nxsteps):
         for yb in range(nysteps):
             ypos = yb * cells_per_step
@@ -108,23 +142,26 @@ def find_cars_multiscale(img, ystart, ystop, scale, svc, X_scaler,
                 xbox_left = np.int(xleft * scale)
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
-                cv2.rectangle(draw_img,
-                              (xbox_left, ytop_draw + ystart),
-                              (xbox_left + win_draw, ytop_draw + win_draw + ystart),
-                              (0, 0, 255), 1)
+                # cv2.rectangle(draw_img,
+                #               (xbox_left, ytop_draw + ystart),
+                #               (xbox_left + win_draw, ytop_draw + win_draw + ystart),
+                #               (0, 0, 255), 1)
 
                 # Add heatmap to each box
-                heatmap[ytop_draw + ystart:ytop_draw + win_draw +
-                        ystart, xbox_left:xbox_left + win_draw] += 1
+                bbox.append([[xbox_left, ytop_draw + ystart],
+                             [xbox_left + win_draw, ytop_draw + win_draw + ystart]])
+
+                # heatmap[ytop_draw + ystart:ytop_draw + win_draw +
+                #         ystart, xbox_left:xbox_left + win_draw] += 1
 
     # Apply threshold to help remove false positives
-    threshold = 1
-    heatmap[heatmap <= threshold] = 0
+    # threshold = 1
+    # heatmap[heatmap <= threshold] = 0
 
     # Visualize the heatmap when displaying
-    img_heatmap = np.clip(heatmap, 0, 255)
-    # Find final boxes from heatmap using label function
-    labels = label(img_heatmap)
-    draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
+    # img_heatmap = np.clip(heatmap, 0, 255)
+    # # Find final boxes from heatmap using label function
+    # labels = label(img_heatmap)
+    # draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
 
-    return draw_img
+    return draw_img, bbox

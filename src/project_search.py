@@ -8,17 +8,14 @@ from functions_training import single_img_features
 use_float_image = False  # True
 use_small_sample = True  # False
 
-# Search Parameter
-y_start_stop = [400, 720]  # Min and max in y to search in slide_window()
-
 filename = 'svc_pickle.'
 if use_float_image:
     filename += 'float.'
 if use_small_sample:
     filename += 'small.'
+filename = filename + 'p'
 
-# dist_pickle    = pickle.load(open("svc_pickle.p", "rb"))
-dist_pickle    = pickle.load(open(filename + 'p', "rb"))
+dist_pickle    = pickle.load(open(filename, "rb"))
 color_space    = dist_pickle["color_space"]
 svc            = dist_pickle["svc"]
 X_scaler       = dist_pickle["scaler"]
@@ -37,6 +34,9 @@ print('  pix_per_cell: ', pix_per_cell)
 print('  cell_per_block: ', cell_per_block)
 print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
+
+# Search Parameter
+y_start_stop = [400, 720]  # Min and max in y to search in slide_window()
 
 print('Search Parameter:')
 print('  y_start_stop:', y_start_stop)
@@ -89,7 +89,7 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     return window_list
 
 
-def search_windows(img, windows, clf, scaler,
+def search_windows(image, windows, clf, scaler,
                    color_space='YCrCb',
                    spatial_size=(32, 32),
                    hist_bins=32, hist_range=(0, 255),
@@ -99,22 +99,20 @@ def search_windows(img, windows, clf, scaler,
     for window in windows:
 
         # 1) Extract the test window from original image
-        test_img = cv2.resize(
-            img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))
+        img = cv2.resize(image[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))
 
         # 2) Extract features for that window using single_img_features()
-        features = single_img_features(test_img,
-                                       color_space=color_space,
-                                       spatial_size=spatial_size,
-                                       hist_bins=hist_bins, hist_range=hist_range,
-                                       orient=orient,
-                                       pix_per_cell=pix_per_cell, cell_per_block=cell_per_block)
+        img_features = single_img_features(img,
+                                           color_space=color_space,
+                                           spatial_size=spatial_size,
+                                           hist_bins=hist_bins, hist_range=hist_range,
+                                           orient=orient, pix_per_cell=pix_per_cell, cell_per_block=cell_per_block)
 
         # 3) Scale extracted features to be fed to classifier
-        test_features = scaler.transform(np.array(features).reshape(1, -1))
+        features = scaler.transform(np.array(img_features).reshape(1, -1))
 
         # 4) Predict using your classifier
-        prediction = clf.predict(test_features)
+        prediction = clf.predict(features)
         if prediction == 1:
             on_windows.append(window)
 

@@ -93,7 +93,8 @@ def single_img_features(image,
     for channel in range(img.shape[2]):
         hog_features.extend(get_hog_features(img[:, :, channel],
                                              orient, pix_per_cell, cell_per_block,
-                                             transform_sqrt=True, vis=False, feature_vec=True))
+                                             transform_sqrt=True,
+                                             vis=False, feature_vec=True))
     # print(len(hog_features))
     features.append(hog_features)
 
