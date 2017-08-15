@@ -41,10 +41,10 @@ print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
 
 
-M = []
-Minv = []
-search_area = []
-vehicle_height = 1.65
+# M = []
+# Minv = []
+# search_area = []
+VEHICLE_HEIGHT = 1.65
 
 
 def set_perspective_matrix():
@@ -77,14 +77,14 @@ def set_perspective_matrix():
 def find_cars_multiscale(image, draw_img, svc, X_scaler,
                          orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
 
-    global vehicle_height
+    global search_area
 
     bbox_list = []
     for area in search_area:
         scale = 1.5
 
         width = area[1][0] - area[0][0]
-        height = int(vehicle_height * width / 20)
+        height = int(VEHICLE_HEIGHT * width / 20)
 
         xstart = max(0, area[0][0])
         xstop = min(1279, area[1][0])
@@ -234,17 +234,31 @@ def process_image(image, weight=0.5):
         # print('bbox: ', bbox)
         cv2.rectangle(draw_img, tuple(bbox[0]), tuple(bbox[1]), (0, 0, 255), 1)
 
-    heatmap = np.zeros_like(image[:, :, 0]).astype(np.float)
+    heatmap = np.zeros_like(image[:, :, 0]).astype(np.float32)
     add_heat(heatmap, bbox_list)
     heatmap = apply_threshold(heatmap, 1)
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
 
-
+    # X) Overlay heat-map
     img_heatmap = np.clip(heatmap, 0, 255)
     labels = label(img_heatmap)
     draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
+
+    # X) Draw heat-map
+    font_size = 1
+    font = cv2.FONT_HERSHEY_DUPLEX
+    cv2.putText(draw_img, 'Heatmap', (20, 40), font, font_size, (255, 255, 255))
+
+    mini_heatmap = np.clip(heatmap * 10 + 20, 20, 240)
+    mini_heatmap = cv2.resize(mini_heatmap, (320, 180))
+    mini_heatmap = cv2.cvtColor(mini_heatmap, cv2.COLOR_GRAY2RGB)
+    draw_img[50:50 + mini_heatmap.shape[0], 10:10 + mini_heatmap.shape[1]] = mini_heatmap
+
+    # X) Draw Detected car positions
+
+
 
     # return cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
     return draw_img
@@ -262,7 +276,7 @@ set_perspective_matrix()
 clip1 = VideoFileClip('../test_video.mp4')
 frameno = 0
 for frame in clip1.iter_frames():
-    if frameno % 2 == 0:
+    if frameno % 1 == 0:
         print('frameno: {:5.0f}'.format(frameno))
         result = process_image(frame)
         cv2.imshow('frame', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
@@ -270,7 +284,7 @@ for frame in clip1.iter_frames():
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cv2.destroyAllWindows()
-
+exit(0)
 
 clip1 = VideoFileClip('../project_video.mp4')
 frameno = 0
