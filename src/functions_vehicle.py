@@ -8,6 +8,7 @@ from functions_training import color_hist
 M = []
 Minv = []
 search_area = []
+vehicle_height = 1.65
 
 
 def set_perspective_matrix():
@@ -24,7 +25,7 @@ def set_perspective_matrix():
 
     print('Search Area:')
     search_area = []
-    for y in range(5, 24, 1):
+    for y in range(6, 24, 1):
         x = -10
         x0 = (M[0][0] * x + M[0][1] * y + M[0][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
         y0 = (M[1][0] * x + M[1][1] * y + M[1][2]) / (M[2][0] * x + M[2][1] * y + M[2][2])
@@ -40,12 +41,14 @@ def set_perspective_matrix():
 def find_cars_multiscale(image, draw_img, svc, X_scaler,
                          orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
 
+    global vehicle_height
+
     bbox_list = []
     for area in search_area:
         scale = 1.5
 
         width = area[1][0] - area[0][0]
-        height = int(1.75 * width / 20)
+        height = int(vehicle_height * width / 20)
 
         xstart = max(0, area[0][0])
         xstop = min(1279, area[1][0])

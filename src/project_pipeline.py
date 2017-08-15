@@ -75,25 +75,6 @@ def draw_labeled_bboxes(img, labels):
 def process_image(image, weight=0.5):
 
     # 8) Vehicles Detection
-    # for level in (1, 2, 3, 4):
-    #     ystart = 400
-    #     ystop = ystart + 64 * level
-    #     xstart = 640 - 160 * level
-    #     xstop = 640 + 160 * level
-    #     scale = 4 / level
-    #     cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (0, 0, 255), 1)
-
-    #     draw_img, bbox_list = find_cars_multiscale(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-    #                                                orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    #     add_heat(heatmap, bbox_list)
-
-
-    # 8) Vehicles Detection
-    # for scale in (1, 1.5, 2):
-    #     draw_img, bbox_list = find_cars_multiscale(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-    #                                                orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    #     add_heat(heatmap, bbox_list)
-
     draw_img = np.copy(image)
     draw_img, bbox_list = find_cars_multiscale(image, draw_img, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
