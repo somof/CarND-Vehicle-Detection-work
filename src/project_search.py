@@ -6,12 +6,12 @@ import pickle
 from functions_training import single_img_features
 
 use_float_image = False  # True
-use_small_sample = True  # False
+use_small_number_sample = True  # False
 
 filename = 'svc_pickle.'
 if use_float_image:
     filename += 'float.'
-if use_small_sample:
+if use_small_number_sample:
     filename += 'small.'
 filename = filename + 'p'
 

@@ -1,8 +1,6 @@
 import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
 import os
 import numpy as np
-import cv2
 import pickle
 import glob
 import time
@@ -12,12 +10,12 @@ from sklearn.model_selection import train_test_split
 from functions_training import single_img_features
 
 use_float_image = False
-use_small_sample = False  # True
+use_small_number_sample = False  # True
 
 filename = 'svc_pickle.'
 if use_float_image:
     filename += 'float.'
-if use_small_sample:
+if use_small_number_sample:
     filename += 'small.'
 filename = filename + 'p'
 
@@ -49,7 +47,7 @@ print('notcars data length:', len(notcars))
 
 # Reduce the sample size because
 # The quiz evaluator times out after 13s of CPU time
-if use_small_sample:
+if use_small_number_sample:
     sample_size = 500
     cars = cars[0:sample_size]
     notcars = notcars[0:sample_size]
