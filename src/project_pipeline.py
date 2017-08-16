@@ -182,11 +182,11 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step  # 82 | 12
 
     # Compute individual channel HOG features for the entire image
-    if hog1 is None or hog2 is None or hog1 is None:
+    if True or hog1 is None or hog2 is None or hog1 is None:
         hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
         hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
         hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
+    print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
     # hog1 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
     # hog2 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
     # hog3 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
