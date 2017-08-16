@@ -42,7 +42,7 @@ print('  hist_bins: ', hist_bins)
 ############################################################
 # Detect Vehicle functions
 
-VEHICLE_HEIGHT = 1.75  # meter
+VEHICLE_HEIGHT = 1.4  # meter
 DISTANCE       = 30  # meter
 DISTANCE_STEP  = 1  # meter
 DISTANCE_NUM   = DISTANCE // DISTANCE_STEP
@@ -133,7 +133,7 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
         scale = 1.5
 
         width = area[1][0] - area[0][0]
-        height = int(VEHICLE_HEIGHT * width / 20)
+        height = int(VEHICLE_HEIGHT * width / 18.5)
 
         xstart = max(0, area[0][0])
         xstop = min(1279, area[1][0])
@@ -143,35 +143,20 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
         # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
         # cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (255, 0, 0), 1)
 
-        draw_img, bbox, hog1, hog2, hog3 = find_cars(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-                                                     hog1, hog2, hog3,
-                                                     orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        bbox, hog1, hog2, hog3 = find_cars(image, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+                                           hog1, hog2, hog3, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
         if bbox:
             bbox_list.extend(bbox)
 
     return draw_img, bbox_list
 
 
-def find_cars(img, draw_img,
-              ystart, ystop, xstart, xstop, scale,
-              svc, X_scaler,
-              hog1, hog2, hog3,
-              orient, pix_per_cell, cell_per_block,
+def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+              hog1, hog2, hog3, orient, pix_per_cell, cell_per_block,
               spatial_size, hist_bins):
 
-    # draw_img = np.copy(img)
-    # img = img.astype(np.float32) / 255
-    # heatmap = np.zeros_like(img[:, :, 0]).astype(np.float)
-
     img_tosearch = img[ystart:ystop, xstart:xstop, :]
-
-    # if 128 < img_tosearch.shape[0]:
-    #     pre_scale = 128 / img_tosearch.shape[0]
-    #     img_tosearch = cv2.resize(img_tosearch,
-    #                               (np.int(img_tosearch.shape[1] * pre_scale),
-    #                                np.int(img_tosearch.shape[0] * pre_scale)))
-    #     # print(img_tosearch.shape)
-
     ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
     if scale != 1:
         imshape = ctrans_tosearch.shape
@@ -237,11 +222,10 @@ def find_cars(img, draw_img,
                 xbox_left = np.int(xleft * scale)
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
-                # Add heatmap to each box
                 bbox.append([[xbox_left, ytop_draw + ystart],
                              [xbox_left + win_draw, ytop_draw + win_draw + ystart]])
 
-    return draw_img, bbox, hog1, hog2, hog3
+    return bbox, hog1, hog2, hog3
 
 
 def add_heat(heatmap, bbox_list):
@@ -396,7 +380,7 @@ def process_image(image, weight=0.5):
     heatmap_fifo[0][:][:] = heatmap_cur
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
-    heatmap_cur = apply_threshold(heatmap_cur, 5)
+    heatmap_cur = apply_threshold(heatmap_cur, 6)  # 6 or 7
     labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
     # print(' heatmap: ', heatmap.shape)
     # print(' contours: ', contours.shape)
