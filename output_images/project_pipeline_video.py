@@ -507,6 +507,7 @@ right_curverad = 0
 pre_left_curverad = 0
 pre_right_curverad = 0
 car_positions = np.zeros((FRAMENUM, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
+heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
 white_output = './test_video_out.mp4'
 clip1 = VideoFileClip('../test_video.mp4')
@@ -525,6 +526,7 @@ right_curverad = 0
 pre_left_curverad = 0
 pre_right_curverad = 0
 car_positions = np.zeros((FRAMENUM, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
+heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
 white_output = './project_video_out.mp4'
 clip1 = VideoFileClip('../project_video.mp4')

@@ -279,7 +279,7 @@ def process_image(image, weight=0.5):
     heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
-    heatmap_cur = apply_threshold(heatmap_cur, 6)  # 6 or 7
+    heatmap_cur = apply_threshold(heatmap_cur, 5)  # 6 or 7
     labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
     # print(' heatmap: ', heatmap.shape)
     # print(' contours: ', contours.shape)
@@ -350,22 +350,25 @@ set_perspective_matrix()
 ######################################
 # process frame by frame for developing
 
-# clip1 = VideoFileClip('../test_video.mp4')
-# frameno = 0
-# for frame in clip1.iter_frames():
-#     if frameno % 1 == 0:
-#         print('frameno: {:5.0f}'.format(frameno))
-#         result = process_image(frame)
-#         cv2.imshow('frame', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
-#     frameno += 1
-#     if cv2.waitKey(1) & 0xFF == ord('q'):
-#         break
-# cv2.destroyAllWindows()
+clip1 = VideoFileClip('../test_video.mp4')
+frameno = 0
+car_positions = np.zeros((FRAMENUM, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
+heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
+for frame in clip1.iter_frames():
+    if frameno % 1 == 0:
+        print('frameno: {:5.0f}'.format(frameno))
+        result = process_image(frame)
+        cv2.imshow('frame', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
+    frameno += 1
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cv2.destroyAllWindows()
 
 
 clip1 = VideoFileClip('../project_video.mp4')
 frameno = 0
 car_positions = np.zeros((FRAMENUM, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
+heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 for frame in clip1.iter_frames():
     if 160 < frameno and frameno % 4 == 0:
         print('frameno: {:5.0f}'.format(frameno))
