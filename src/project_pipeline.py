@@ -40,16 +40,17 @@ print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
 
 
-VEHICLE_HEIGHT = 1.4  # 1.65  # meter
+VEHICLE_HEIGHT = 1.5  # 1.65  # meter
 DISTANCE       = 30  # meter
 DISTANCE_STEP  = 1  # meter
-DISTANCE_NUM   = DISTANCE // DISTANCE_STEP
+DISTANCE_NUM   = 8  # DISTANCE // DISTANCE_STEP
 LANE_NUM       = 5
 CENTER_LANE    = 2  # Center Lane No
 FRAMENUM       = 5  # FRAMENO_0 is the current frame
 
 car_positions = np.zeros((FRAMENUM, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
 heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
+distance_map = (7, 8, 9, 10, 11, 13, 17, 23, 30)
 
 
 def set_perspective_matrix():
@@ -71,14 +72,15 @@ def set_perspective_matrix():
 
     print('Search Area:')
     search_area = []
-    for y in range(6, DISTANCE, DISTANCE_STEP):
-        x = -10
+    # for y in range(6, DISTANCE, DISTANCE_STEP):
+    for y in distance_map:
         x = -1.85 - 3.7 - 3.7
+        x = -10
         x0 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         y0 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
-        x = 10
         x = 1.85 + 3.7 + 3.7
+        x = 10
         x1 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         y1 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
@@ -86,35 +88,35 @@ def set_perspective_matrix():
         print('{:3.0f} : ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(y, x0, y0, x1, y1))
 
 
-def hold_car_positions(bbox_list):
-    global M2inv, car_positions
-    # car_positions[FRAMENUM][LANE_NUM][DISTANCE]
+# def hold_car_positions(bbox_list):
+#     global M2inv, car_positions
+#     # car_positions[FRAMENUM][LANE_NUM][DISTANCE]
 
-    car_positions[1:FRAMENUM, :, :] = car_positions[0:FRAMENUM - 1, :, :]
-    car_positions[0][:][:] = np.zeros((1, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
+#     car_positions[1:FRAMENUM, :, :] = car_positions[0:FRAMENUM - 1, :, :]
+#     car_positions[0][:][:] = np.zeros((1, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
 
-    for box in bbox_list:
-        x = (box[0][0] + box[1][0]) / 2
-        y = max(box[0][1], box[1][1])
-        x3d = (M2inv[0][0] * x + M2inv[0][1] * y + M2inv[0][2]) / (M2inv[2][0] * x + M2inv[2][1] * y + M2inv[2][2])
-        y3d = (M2inv[1][0] * x + M2inv[1][1] * y + M2inv[1][2]) / (M2inv[2][0] * x + M2inv[2][1] * y + M2inv[2][2])
+#     for box in bbox_list:
+#         x = (box[0][0] + box[1][0]) / 2
+#         y = max(box[0][1], box[1][1])
+#         x3d = (M2inv[0][0] * x + M2inv[0][1] * y + M2inv[0][2]) / (M2inv[2][0] * x + M2inv[2][1] * y + M2inv[2][2])
+#         y3d = (M2inv[1][0] * x + M2inv[1][1] * y + M2inv[1][2]) / (M2inv[2][0] * x + M2inv[2][1] * y + M2inv[2][2])
 
 
-        # 5lane: -9.25 ... 9.25
-        laneno = int((x3d + 9.25) / 3.7 + 0.5)
-        distance = int(y3d / DISTANCE_STEP + 0.5)
-        # if LANE_NUM <= laneno:
-        #     print('lane no is ', laneno, ' >= ', LANE_NUM)
-        # if DISTANCE_NUM <= distance:
-        #     print('distance is ', distance * DISTANCE_STEP, ' >= ', DISTANCE)
+#         # 5lane: -9.25 ... 9.25
+#         laneno = int((x3d + 9.25) / 3.7 + 0.5)
+#         distance = int(y3d / DISTANCE_STEP + 0.5)
+#         # if LANE_NUM <= laneno:
+#         #     print('lane no is ', laneno, ' >= ', LANE_NUM)
+#         # if DISTANCE_NUM <= distance:
+#         #     print('distance is ', distance * DISTANCE_STEP, ' >= ', DISTANCE)
 
-        # print(box, ' -> ', x, y, ' -> ', x3d, y3d, ' -> ', laneno, distance)
-        if 0 <= distance and distance < DISTANCE_NUM and 0 <= laneno and laneno < LANE_NUM:
-            car_positions[0][distance][laneno] += 1
-            if distance < DISTANCE_NUM - 1:
-                car_positions[0][distance + 1][laneno] += 1
-            if distance < DISTANCE_NUM - 2:
-                car_positions[0][distance + 2][laneno] += 1
+#         # print(box, ' -> ', x, y, ' -> ', x3d, y3d, ' -> ', laneno, distance)
+#         if 0 <= distance and distance < DISTANCE_NUM and 0 <= laneno and laneno < LANE_NUM:
+#             car_positions[0][distance][laneno] += 1
+#             if distance < DISTANCE_NUM - 1:
+#                 car_positions[0][distance + 1][laneno] += 1
+#             if distance < DISTANCE_NUM - 2:
+#                 car_positions[0][distance + 2][laneno] += 1
 
 
 def find_cars_multiscale(image, draw_img, svc, X_scaler,
@@ -131,7 +133,8 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
         scale = 1.5
 
         width = area[1][0] - area[0][0]
-        height = int(VEHICLE_HEIGHT * width / 18.5)
+        height = int(VEHICLE_HEIGHT * width / 3.7 / 5)
+        height = int(VEHICLE_HEIGHT * width / 20)
 
         xstart = max(0, area[0][0])
         xstop = min(1279, area[1][0])
@@ -279,13 +282,13 @@ def process_image(image, weight=0.5):
     heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
-    heatmap_cur = apply_threshold(heatmap_cur, 5)  # 6 or 7
+    heatmap_cur = apply_threshold(heatmap_cur, 4)  # 6 or 7
     labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
     # print(' heatmap: ', heatmap.shape)
     # print(' contours: ', contours.shape)
 
     # Update Car Positions
-    hold_car_positions(bbox_list)
+    # hold_car_positions(bbox_list)
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
@@ -325,16 +328,16 @@ def process_image(image, weight=0.5):
         px += mini.shape[1] + 10
 
     # X) Draw Detected car positions
-    font_size = 0.5
-    for f in range(FRAMENUM):
-        cv2.putText(draw_img, 'frame {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-        posi = car_positions[f]
-        mini = np.clip(posi * 40 + 20, 20, 240)
-        mini = cv2.resize(mini, (50, 180), interpolation=cv2.INTER_NEAREST)
-        mini = cv2.flip(mini, 0)
-        mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
-        draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
-        px += mini.shape[1] + 10
+    # font_size = 0.5
+    # for f in range(FRAMENUM):
+    #     cv2.putText(draw_img, 'frame {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
+    #     posi = car_positions[f]
+    #     mini = np.clip(posi * 40 + 20, 20, 240)
+    #     mini = cv2.resize(mini, (50, 180), interpolation=cv2.INTER_NEAREST)
+    #     mini = cv2.flip(mini, 0)
+    #     mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
+    #     draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
+    #     px += mini.shape[1] + 10
 
 
     # return cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
