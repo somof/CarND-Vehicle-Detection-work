@@ -10,21 +10,21 @@ endif
 
 
 all: 
-	${PYTHONC} project_training.py
+	#${PYTHONC} project_training.py
 	#${PYTHONC} project_search.py
 	${PYTHONC} project_pipeline.py
 
 lesson:
-	${PYTHONC} lesson37_MultipleDetections.py
-	#${PYTHONC} lesson34_SearchandClassify_NotWork.py
-	#${PYTHONC} lesson34_SearchandClassify_NotWork_load.py
-	#${PYTHONC} lesson35_HogSub-samplingWindowSearch.py
-	#${PYTHONC} lesson28_ColorClassify.py
-	#${PYTHONC} lesson22_CombineAndNormalizeFeatures.py
-	#${PYTHONC} lesson20_scikit-HOG.py
-	#${PYTHONC} lesson19_DataExploration.py
-	#${PYTHONC} lesson16_SpatialBinnigColor.py
-	#${PYTHONC} lesson15_ColorSpaces.py
+	#${PYTHONC} 00lesson/lesson37_MultipleDetections.py
+	#${PYTHONC} 00lesson/lesson34_SearchandClassify_NotWork.py
+	#${PYTHONC} 00lesson/lesson34_SearchandClassify_NotWork_load.py
+	#${PYTHONC} 00lesson/lesson35_HogSub-samplingWindowSearch.py
+	#${PYTHONC} 00lesson/lesson28_ColorClassify.py
+	#${PYTHONC} 00lesson/lesson22_CombineAndNormalizeFeatures.py
+	#${PYTHONC} 00lesson/lesson20_scikit-HOG.py
+	#${PYTHONC} 00lesson/lesson19_DataExploration.py
+	#${PYTHONC} 00lesson/lesson16_SpatialBinnigColor.py
+	#${PYTHONC} 00lesson/lesson15_ColorSpaces.py
 
 run: 
 	${PYTHONC} project_training.py

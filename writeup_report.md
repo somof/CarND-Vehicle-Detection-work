@@ -3,6 +3,7 @@ Vehicle Detection Project
 
 # 1. Dataset Prepaeration
 
+<!--
 ## 1.1 Project Dataset provided by Udacity
 Here are links to the labeled data for vehicle and non-vehicle examples to train your classifier. 
 
@@ -29,8 +30,11 @@ https://github.com/udacity/self-driving-car/blob/master/annotations/labels_crowd
 ## 1.3 [Autti](http://autti.co/) Dataset
 http://bit.ly/udacity-annotations-autti
 
+-->
 
 ## 1.4 Selecting Labeled Dataset
+
+I took Udacity provided dataset to classify vehicles.
 
 TODO ここから書く
 
@@ -61,6 +65,12 @@ TODO ここから書く
 
 # 2. HOG feature and Other Features to Detect Vehicles
 
+Explain how (and identify where in your code) 
+you extracted HOG features from the training images.
+
+# 2. HOG feature and Other Features to Detect Vehicles
+
+Explain how you settled on your final choice of HOG parameters.
 
 - For each channel and with your HOG parameters above, the HOG feature vector is 1764 long
 - The spatial binning feature vector is 32 x 32 x 3 = 3072 long -> 16 x 16 x 3 = 768

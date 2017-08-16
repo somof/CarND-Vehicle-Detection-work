@@ -2,10 +2,19 @@
 """
 # Hog Sub-sampling Window Search
 
-Now lets explore a more efficient method for doing the sliding window approach, one that allows us to only have to extract the Hog features once. The code below defines a single function find_cars that's able to both extract features and make predictions.
+Now lets explore a more efficient method for doing the sliding window approach,
+one that allows us to only have to extract the Hog features once.
+The code below defines a single function find_cars that's able to
+both extract features and make predictions.
 
-The find_cars only has to extract hog features once and then can be sub-sampled to get all of its overlaying windows. Each window is defined by a scaling factor where a scale of 1 would result in a window that's 8 x 8 cells then the overlap of each window is in terms of the cell distance. This means that a cells_per_step = 2 would result in a search window overlap of 75%. Its possible to run this same function multiple times for different scale values to generate multiple-scaled search windows.
+The find_cars only has to extract hog features once and then can be
+sub-sampled to get all of its overlaying windows.
+Each window is defined by a scaling factor where a scale of 1 would result in a window
+that's 8 x 8 cells then the overlap of each window is in terms of the cell distance.
 
+This means that a cells_per_step = 2 would result in a search window overlap of 75%.
+Its possible to run this same function multiple times for different scale values to 
+generate multiple-scaled search windows.
 """
 
 import matplotlib.image as mpimg

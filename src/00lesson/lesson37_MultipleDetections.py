@@ -1,10 +1,20 @@
 """
 # Multiple Detections & False Positives
-Here are six consecutive frames from the project video and I'm showing all the bounding boxes for where my classifier reported positive detections. You can see that overlapping detections exist for each of the two vehicles, and in two of the frames, I find a false positive detection on the guardrail to the left. In this exercise, you'll build a heat-map from these detections in order to combine overlapping detections and remove false positives.
+
+Here are six consecutive frames from the project video and
+I'm showing all the bounding boxes for where my classifier reported positive detections.
+You can see that overlapping detections exist for each of the two vehicles,
+and in two of the frames, I find a false positive detection on the guardrail to the left.
+
+In this exercise, you'll build a heat-map from these detections in order
+to combine overlapping detections and remove false positives.
 
 ## Heat Map
-To make a heat-map, you're simply going to add "heat" (+=1) for all pixels within windows where a positive detection is reported by your classifier. The individual heat-maps for the above images look like this:
+To make a heat-map,
+you're simply going to add "heat" (+=1) for all pixels within windows where a positive 
+detection is reported by your classifier.
 
+The individual heat-maps for the above images look like this:
 """
 
 import matplotlib.image as mpimg

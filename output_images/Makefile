@@ -1,0 +1,18 @@
+
+PYTHONC = ../../miniconda3/envs/carnd-term1/bin/python
+PYTHONG = LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64 ../../miniconda3/envs/carnd-term1-gpu/bin/python
+
+UNAME = ${shell uname}
+ifeq ($(UNAME),Darwin)
+PYTHONC = ../../../../src/miniconda3/envs/carnd-term1/bin/python
+PYTHONG = ../../../../src/miniconda3/envs/carnd-term1/bin/python
+endif
+
+all: 
+	#${PYTHONC} project_training_work255.py
+	#${PYTHONC} project_training.py
+	#${PYTHONC} project_search_load.py
+	${PYTHONC} project_pipeline.py
+
+video:
+	${PYTHONC} project_pipeline_video.py

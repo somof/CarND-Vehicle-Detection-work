@@ -51,7 +51,7 @@ CENTER_LANE    = 2  # Center Lane No
 FRAMENUM       = 5  # FRAMENO_0 is the current frame
 
 car_positions = np.zeros((FRAMENUM, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
-heatmaps = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
+heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
 
 def set_perspective_matrix():
@@ -376,24 +376,40 @@ def process_image(image, weight=0.5):
     #     cv2.rectangle(draw_img, tuple(bbox[0]), tuple(bbox[1]), (0, 0, 255), 1)
 
     # Update Heatmap
-    heatmap = np.zeros_like(image[:, :, 0]).astype(np.float32)
-    add_heat(heatmap, bbox_list)
-    heatmaps[1:FRAMENUM, :, :] = heatmaps[0:FRAMENUM - 1, :, :]
-    heatmaps[0][:][:] = heatmap
+    heatmap_cur = np.zeros_like(image[:, :, 0]).astype(np.uint8)
+    add_heat(heatmap_cur, bbox_list)
+    heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
+    heatmap_fifo[0][:][:] = heatmap_cur
     for f in range(1, FRAMENUM):
-        heatmap += heatmaps[f][:][:]
-    heatmap = apply_threshold(heatmap, FRAMENUM + 2)
+        heatmap_cur += heatmap_fifo[f][:][:]
+    heatmap_cur = apply_threshold(heatmap_cur, 3)
+    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
+    # print(' heatmap: ', heatmap.shape)
+    # print(' contours: ', contours.shape)
 
     # Update Car Positions
-    hold_car_positions(bbox_list)
+    # hold_car_positions(bbox_list)
 
 
     # X)Drawing
 
     # X) Overlay Heatmap
-    img_heatmap = np.clip(heatmap, 0, 255)
-    labels = label(img_heatmap)
-    draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
+    # tmp_heatmap = apply_threshold(heatmap_cur, FRAMENUM + 0)
+    # img_heatmap = np.clip(tmp_heatmap, 0, 255)
+    # labels = label(img_heatmap)
+    # draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
+
+    # print('labelnum :', labelnum)
+    if labelnum > 0:
+        for nlabel in range(1, labelnum): 
+            x, y, w, h, size = contours[nlabel]
+            xg, yg = centroids[nlabel]
+            cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 2550), 6)
+            # cv2.rectangle(draw_img, (x, y), (x + w, y + h), (255, 255, 0), 1)
+
+            # 面積フィルタ
+            # if size >= 100 and size <= 1000:
+            #     centroid.append([xg, yg, size, curpos])
 
     # X) Draw mini Heatmap
     px = 10
@@ -403,7 +419,7 @@ def process_image(image, weight=0.5):
 
     for f in range(FRAMENUM):
         cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-        mini = np.clip(heatmaps[f] * 16 + 10, 20, 250)
+        mini = np.clip(heatmap_fifo[f] * 16 + 10, 20, 250)
         mini = cv2.resize(mini, (180, 100), interpolation=cv2.INTER_NEAREST)
         mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
         draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini

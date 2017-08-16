@@ -11,10 +11,13 @@ from functions_training import single_img_features
 
 use_float_image = False
 use_small_number_sample = False  # True
+use_smallset = False  # True
 
 filename = 'svc_pickle.'
 if use_float_image:
     filename += 'float.'
+if use_smallset:
+    filename += 'smallset.'
 if use_small_number_sample:
     filename += 'small.'
 filename = filename + 'p'
@@ -29,26 +32,31 @@ orient         = 9  # HOG orientations
 pix_per_cell   = 8  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
 spatial_size   = (32, 32)   # (64, 64)  (32, 32)  (16, 16)  # Spatial binning dimensions
-hist_bins      = 64  # 32  # Number of histogram bins
-
-orient         = 11  # HOG orientations
+hist_bins      = 32  # Number of histogram bins
 
 
 # Read in cars and notcars
 cars = []
 notcars = []
-for file in glob.glob('../src/dataset/*_smallset/*/*.jpeg'):
-    if 'image' in file or 'extra' in file:
-        notcars.append(file)
-    else:
+if use_smallset:
+    for file in glob.glob('../src/dataset/*_smallset/*/*.jpeg'):
+        if 'image' in file or 'extra' in file:
+            notcars.append(file)
+        else:
+            cars.append(file)
+else:
+    for file in glob.glob('../src/dataset/vehicles/*/*.png'):
         cars.append(file)
+    for file in glob.glob('../src/dataset/non-vehicles/*/*.png'):
+        notcars.append(file)
+
 print('cars data length:', len(cars))
 print('notcars data length:', len(notcars))
 
 # Reduce the sample size because
 # The quiz evaluator times out after 13s of CPU time
 if use_small_number_sample:
-    sample_size = 500
+    sample_size = 1000
     cars = cars[0:sample_size]
     notcars = notcars[0:sample_size]
 
@@ -64,6 +72,10 @@ def extract_features(imgs,
     # Iterate through the list of images
     for file in imgs:
         img = mpimg.imread(file)
+        if not use_smallset:
+            img = img * 255
+            img = img.astype(np.uint8)
+            # print(np.max(img))
         hist_range = (0, 255)
         if use_float_image:
             img = img.astype(np.float32) / 255
