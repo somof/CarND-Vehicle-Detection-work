@@ -42,7 +42,7 @@ print('  hist_bins: ', hist_bins)
 
 VEHICLE_HEIGHT = 1.75  # meter
 DISTANCE       = 30  # meter
-DISTANCE_STEP  = 1  # meter
+DISTANCE_STEP  = 2  # meter
 DISTANCE_NUM   = DISTANCE // DISTANCE_STEP
 LANE_NUM       = 5
 CENTER_LANE    = 2  # Center Lane No
@@ -115,6 +115,10 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
 
     global search_area
 
+    hog1 = None
+    hog2 = None
+    hog3 = None
+
     bbox_list = []
     for area in search_area:
         scale = 1.5
@@ -122,16 +126,19 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
         width = area[1][0] - area[0][0]
         height = int(VEHICLE_HEIGHT * width / 20)
 
-        xstart = max(0, area[0][0])
-        xstop = min(1279, area[1][0])
+        # xstart = max(0, area[0][0])
+        # xstop = min(1279, area[1][0])
+        xstart = 0
+        xstop = 1279
         ystop = area[0][1]
         ystart = ystop - height
 
         # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
-        # cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (255, 0, 0), 1)
+        cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (255, 0, 0), 1)
 
-        draw_img, bbox = find_cars(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-                                   orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        draw_img, bbox, hog1, hog2, hog3 = find_cars(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+                                                     hog1, hog2, hog3,
+                                                     orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         if bbox:
             bbox_list.extend(bbox)
 
@@ -141,6 +148,7 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
 def find_cars(img, draw_img,
               ystart, ystop, xstart, xstop, scale,
               svc, X_scaler,
+              hog1, hog2, hog3,
               orient, pix_per_cell, cell_per_block,
               spatial_size, hist_bins):
 
@@ -181,13 +189,14 @@ def find_cars(img, draw_img,
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step  # 82 | 12
 
     # Compute individual channel HOG features for the entire image
-    hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    # hog1 = np.zeros((20, 105, 2, 2, 11)).astype(np.float64)
-    # hog2 = np.zeros((20, 105, 2, 2, 11)).astype(np.float64)
-    # hog3 = np.zeros((20, 105, 2, 2, 11)).astype(np.float64)
-    # print(hog1.shape, hog1.dtype)
+    if hog1 is None or hog2 is None or hog1 is None:
+        hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+        hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+        hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+    # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
+    # hog1 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
+    # hog2 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
+    # hog3 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
 
     bbox = []
     for xb in range(nxsteps):
@@ -225,7 +234,7 @@ def find_cars(img, draw_img,
                 bbox.append([[xbox_left, ytop_draw + ystart],
                              [xbox_left + win_draw, ytop_draw + win_draw + ystart]])
 
-    return draw_img, bbox
+    return draw_img, bbox, hog1, hog2, hog3
 
 
 def add_heat(heatmap, bbox_list):
@@ -281,12 +290,10 @@ def process_image(image, weight=0.5):
     heatmap_fifo[0][:][:] = heatmap_cur
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
-    heatmap_cur = apply_threshold(heatmap_cur, 4)
+    heatmap_cur = apply_threshold(heatmap_cur, 6)  # 6 or 7
     labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
     # print(' heatmap: ', heatmap.shape)
     # print(' contours: ', contours.shape)
-
-
 
     # Update Car Positions
     # hold_car_positions(bbox_list)
@@ -295,17 +302,17 @@ def process_image(image, weight=0.5):
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
 
     # X) Overlay Heatmap
-    tmp_heatmap = apply_threshold(heatmap_cur, FRAMENUM + 0)
-    img_heatmap = np.clip(tmp_heatmap, 0, 255)
-    labels = label(img_heatmap)
-    draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
+    # tmp_heatmap = apply_threshold(heatmap_cur, FRAMENUM + 0)
+    # img_heatmap = np.clip(tmp_heatmap, 0, 255)
+    # labels = label(img_heatmap)
+    # draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
 
     # print('labelnum :', labelnum)
     if labelnum > 0:
         for nlabel in range(1, labelnum): 
             x, y, w, h, size = contours[nlabel]
             xg, yg = centroids[nlabel]
-            cv2.rectangle(draw_img, (x, y), (x + w, y + h), (255, 255, 0), 1)
+            cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 6)
             # cv2.circle(draw_img, (int(xg), int(yg)), 30, (255, 255, 0), 1)
 
             # 面積フィルタ

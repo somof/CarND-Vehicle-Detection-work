@@ -68,6 +68,16 @@ TODO ここから書く
 Explain how (and identify where in your code) 
 you extracted HOG features from the training images.
 
+
+TODO
+HOG計算枠と認識の枠がズレているのを修正していない
+
+Perspectiveの値が実際と異なっているのを修正する 実測で
+
+ゴミフィルタが機能していないのを修正する
+
+
+
 # 2. HOG feature and Other Features to Detect Vehicles
 
 Explain how you settled on your final choice of HOG parameters.
