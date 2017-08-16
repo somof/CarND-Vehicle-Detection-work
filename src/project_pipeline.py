@@ -40,9 +40,9 @@ print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
 
 
-VEHICLE_HEIGHT = 1.75  # meter
+VEHICLE_HEIGHT = 1.5  # 1.65  # meter
 DISTANCE       = 30  # meter
-DISTANCE_STEP  = 2  # meter
+DISTANCE_STEP  = 1  # meter
 DISTANCE_NUM   = DISTANCE // DISTANCE_STEP
 LANE_NUM       = 5
 CENTER_LANE    = 2  # Center Lane No
@@ -59,8 +59,13 @@ def set_perspective_matrix():
     # Calculate the Perspective Transformation Matrix and its invert Matrix
     perspective_2d = np.float32([[585, 460], [695, 460], [1127, 685], [203, 685]])
     perspective_3d = np.float32([[-1.85, 30], [1.85, 30], [1.85, 3], [-1.85, 3]])
+
     perspective_2d = np.float32([[600, 440], [640, 440], [1105, 675], [295, 675]])  # trial
     perspective_3d = np.float32([[-1.85, 50], [1.85, 50], [1.85, 5], [-1.85, 5]])
+
+    perspective_2d = np.float32([[600, 440], [640, 440], [1105, 675], [295, 675]])  # trial
+    perspective_3d = np.float32([[-1.85, 40], [1.85, 40], [1.85, 5], [-1.85, 5]])
+
     M2 = cv2.getPerspectiveTransform(perspective_3d, perspective_2d)
     M2inv = cv2.getPerspectiveTransform(perspective_2d, perspective_3d)
 
@@ -68,10 +73,12 @@ def set_perspective_matrix():
     search_area = []
     for y in range(6, DISTANCE, DISTANCE_STEP):
         x = -10
+        x = -1.85 - 3.7 - 3.7
         x0 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         y0 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
         x = 10
+        x = 1.85 + 3.7 + 3.7
         x1 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         y1 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
@@ -126,10 +133,10 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
         width = area[1][0] - area[0][0]
         height = int(VEHICLE_HEIGHT * width / 20)
 
-        # xstart = max(0, area[0][0])
-        # xstop = min(1279, area[1][0])
-        xstart = 0
-        xstop = 1279
+        xstart = max(0, area[0][0])
+        xstop = min(1279, area[1][0])
+        # xstart = 0
+        # xstop = 1279
         ystop = area[0][1]
         ystart = ystop - height
 
@@ -296,7 +303,7 @@ def process_image(image, weight=0.5):
     # print(' contours: ', contours.shape)
 
     # Update Car Positions
-    # hold_car_positions(bbox_list)
+    hold_car_positions(bbox_list)
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
@@ -336,16 +343,16 @@ def process_image(image, weight=0.5):
         px += mini.shape[1] + 10
 
     # X) Draw Detected car positions
-    # font_size = 0.5
-    # for f in range(FRAMENUM):
-    #     cv2.putText(draw_img, 'frame {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-    #     posi = car_positions[f]
-    #     mini = np.clip(posi * 40 + 20, 20, 240)
-    #     mini = cv2.resize(mini, (50, 180), interpolation=cv2.INTER_NEAREST)
-    #     mini = cv2.flip(mini, 0)
-    #     mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
-    #     draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
-    #     px += mini.shape[1] + 10
+    font_size = 0.5
+    for f in range(FRAMENUM):
+        cv2.putText(draw_img, 'frame {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
+        posi = car_positions[f]
+        mini = np.clip(posi * 40 + 20, 20, 240)
+        mini = cv2.resize(mini, (50, 180), interpolation=cv2.INTER_NEAREST)
+        mini = cv2.flip(mini, 0)
+        mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
+        draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
+        px += mini.shape[1] + 10
 
 
     # return cv2.addWeighted(undist, 1, newwarp, 0.3, 0)

@@ -40,7 +40,7 @@ print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
 
 
-VEHICLE_HEIGHT = 1.75  # meter
+VEHICLE_HEIGHT = 1.5  # 1.65  # meter
 DISTANCE       = 30  # meter
 DISTANCE_STEP  = 1  # meter
 DISTANCE_NUM   = DISTANCE // DISTANCE_STEP
@@ -49,7 +49,7 @@ CENTER_LANE    = 2  # Center Lane No
 FRAMENUM       = 5  # FRAMENO_0 is the current frame
 
 car_positions = np.zeros((FRAMENUM, DISTANCE_NUM, LANE_NUM), dtype=np.uint8)
-heatmaps = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
+heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
 
 def set_perspective_matrix():
@@ -59,8 +59,13 @@ def set_perspective_matrix():
     # Calculate the Perspective Transformation Matrix and its invert Matrix
     perspective_2d = np.float32([[585, 460], [695, 460], [1127, 685], [203, 685]])
     perspective_3d = np.float32([[-1.85, 30], [1.85, 30], [1.85, 3], [-1.85, 3]])
+
     perspective_2d = np.float32([[600, 440], [640, 440], [1105, 675], [295, 675]])  # trial
     perspective_3d = np.float32([[-1.85, 50], [1.85, 50], [1.85, 5], [-1.85, 5]])
+
+    perspective_2d = np.float32([[600, 440], [640, 440], [1105, 675], [295, 675]])  # trial
+    perspective_3d = np.float32([[-1.85, 40], [1.85, 40], [1.85, 5], [-1.85, 5]])
+
     M2 = cv2.getPerspectiveTransform(perspective_3d, perspective_2d)
     M2inv = cv2.getPerspectiveTransform(perspective_2d, perspective_3d)
 
@@ -68,10 +73,12 @@ def set_perspective_matrix():
     search_area = []
     for y in range(6, DISTANCE, DISTANCE_STEP):
         x = -10
+        x = -1.85 - 3.7 - 3.7
         x0 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         y0 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
         x = 10
+        x = 1.85 + 3.7 + 3.7
         x1 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         y1 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
@@ -115,6 +122,10 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
 
     global search_area
 
+    hog1 = None
+    hog2 = None
+    hog3 = None
+
     bbox_list = []
     for area in search_area:
         scale = 1.5
@@ -124,14 +135,17 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
 
         xstart = max(0, area[0][0])
         xstop = min(1279, area[1][0])
+        # xstart = 0
+        # xstop = 1279
         ystop = area[0][1]
         ystart = ystop - height
 
         # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
-        # cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (255, 0, 0), 1)
+        cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (255, 0, 0), 1)
 
-        draw_img, bbox = find_cars(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-                                   orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        draw_img, bbox, hog1, hog2, hog3 = find_cars(image, draw_img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+                                                     hog1, hog2, hog3,
+                                                     orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         if bbox:
             bbox_list.extend(bbox)
 
@@ -141,6 +155,7 @@ def find_cars_multiscale(image, draw_img, svc, X_scaler,
 def find_cars(img, draw_img,
               ystart, ystop, xstart, xstop, scale,
               svc, X_scaler,
+              hog1, hog2, hog3,
               orient, pix_per_cell, cell_per_block,
               spatial_size, hist_bins):
 
@@ -181,13 +196,14 @@ def find_cars(img, draw_img,
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step  # 82 | 12
 
     # Compute individual channel HOG features for the entire image
-    hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    # hog1 = np.zeros((20, 105, 2, 2, 11)).astype(np.float64)
-    # hog2 = np.zeros((20, 105, 2, 2, 11)).astype(np.float64)
-    # hog3 = np.zeros((20, 105, 2, 2, 11)).astype(np.float64)
-    # print(hog1.shape, hog1.dtype)
+    if hog1 is None or hog2 is None or hog1 is None:
+        hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+        hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+        hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+    # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
+    # hog1 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
+    # hog2 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
+    # hog3 = np.zeros((21, 105, 2, 2, 9)).astype(np.float64)
 
     bbox = []
     for xb in range(nxsteps):
@@ -225,7 +241,7 @@ def find_cars(img, draw_img,
                 bbox.append([[xbox_left, ytop_draw + ystart],
                              [xbox_left + win_draw, ytop_draw + win_draw + ystart]])
 
-    return draw_img, bbox
+    return draw_img, bbox, hog1, hog2, hog3
 
 
 def add_heat(heatmap, bbox_list):
@@ -275,25 +291,42 @@ def process_image(image, weight=0.5):
     #     cv2.rectangle(draw_img, tuple(bbox[0]), tuple(bbox[1]), (0, 0, 255), 1)
 
     # Update Heatmap
-    heatmap = np.zeros_like(image[:, :, 0]).astype(np.float32)
-    add_heat(heatmap, bbox_list)
-    heatmaps[1:FRAMENUM, :, :] = heatmaps[0:FRAMENUM - 1, :, :]
-    heatmaps[0][:][:] = heatmap
+    heatmap_cur = np.zeros_like(image[:, :, 0]).astype(np.uint8)
+    add_heat(heatmap_cur, bbox_list)
+    heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
+    heatmap_fifo[0][:][:] = heatmap_cur
     for f in range(1, FRAMENUM):
-        heatmap += heatmaps[f][:][:]
-    heatmap = apply_threshold(heatmap, FRAMENUM + 2)
+        heatmap_cur += heatmap_fifo[f][:][:]
+    heatmap_cur = apply_threshold(heatmap_cur, 6)  # 6 or 7
+    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
+    # print(' heatmap: ', heatmap.shape)
+    # print(' contours: ', contours.shape)
 
     # Update Car Positions
     hold_car_positions(bbox_list)
-
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
 
     # X) Overlay Heatmap
-    img_heatmap = np.clip(heatmap, 0, 255)
-    labels = label(img_heatmap)
-    draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
+    # tmp_heatmap = apply_threshold(heatmap_cur, FRAMENUM + 0)
+    # img_heatmap = np.clip(tmp_heatmap, 0, 255)
+    # labels = label(img_heatmap)
+    # draw_img = draw_labeled_bboxes(np.copy(draw_img), labels)
+
+    # print('labelnum :', labelnum)
+    if labelnum > 0:
+        for nlabel in range(1, labelnum): 
+            x, y, w, h, size = contours[nlabel]
+            xg, yg = centroids[nlabel]
+            cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 6)
+            # cv2.circle(draw_img, (int(xg), int(yg)), 30, (255, 255, 0), 1)
+
+            # 面積フィルタ
+            # if size >= 100 and size <= 1000:
+            #     centroid.append([xg, yg, size, curpos])
+
+
 
     # X) Draw mini Heatmap
     px = 10
@@ -303,7 +336,7 @@ def process_image(image, weight=0.5):
 
     for f in range(FRAMENUM):
         cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-        mini = np.clip(heatmaps[f] * 16 + 10, 20, 250)
+        mini = np.clip(heatmap_fifo[f] * 16 + 10, 20, 250)
         mini = cv2.resize(mini, (180, 100), interpolation=cv2.INTER_NEAREST)
         mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
         draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
@@ -335,17 +368,18 @@ set_perspective_matrix()
 ######################################
 # process frame by frame for developing
 
-clip1 = VideoFileClip('../test_video.mp4')
-frameno = 0
-for frame in clip1.iter_frames():
-    if frameno % 1 == 0:
-        print('frameno: {:5.0f}'.format(frameno))
-        result = process_image(frame)
-        cv2.imshow('frame', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
-    frameno += 1
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-cv2.destroyAllWindows()
+# clip1 = VideoFileClip('../test_video.mp4')
+# frameno = 0
+# for frame in clip1.iter_frames():
+#     if frameno % 1 == 0:
+#         print('frameno: {:5.0f}'.format(frameno))
+#         result = process_image(frame)
+#         cv2.imshow('frame', cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
+#     frameno += 1
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+# cv2.destroyAllWindows()
+
 
 clip1 = VideoFileClip('../project_video.mp4')
 frameno = 0
@@ -359,6 +393,7 @@ for frame in clip1.iter_frames():
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cv2.destroyAllWindows()
+
 
 # import os
 # for file in ('test_video.mp4', ):
