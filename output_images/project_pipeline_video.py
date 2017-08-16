@@ -382,7 +382,7 @@ def process_image(image, weight=0.5):
     heatmap_fifo[0][:][:] = heatmap_cur
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
-    heatmap_cur = apply_threshold(heatmap_cur, 3)
+    heatmap_cur = apply_threshold(heatmap_cur, 4)
     labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
     # print(' heatmap: ', heatmap.shape)
     # print(' contours: ', contours.shape)
