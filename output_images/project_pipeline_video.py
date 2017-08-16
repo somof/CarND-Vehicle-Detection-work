@@ -377,7 +377,7 @@ def process_image(image, weight=0.5):
     heatmap_cur = np.zeros_like(image[:, :, 0]).astype(np.uint8)
     add_heat(heatmap_cur, bbox_list)
     heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
-    heatmap_fifo[0][:][:] = heatmap_cur
+    heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
     heatmap_cur = apply_threshold(heatmap_cur, 6)  # 6 or 7
@@ -402,8 +402,8 @@ def process_image(image, weight=0.5):
         for nlabel in range(1, labelnum): 
             x, y, w, h, size = contours[nlabel]
             xg, yg = centroids[nlabel]
-            cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 2550), 6)
-            # cv2.rectangle(draw_img, (x, y), (x + w, y + h), (255, 255, 0), 1)
+            cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 6)
+            # cv2.circle(draw_img, (int(xg), int(yg)), 30, (255, 255, 0), 1)
 
             # 面積フィルタ
             # if size >= 100 and size <= 1000:

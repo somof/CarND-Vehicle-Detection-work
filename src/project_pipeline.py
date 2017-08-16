@@ -276,7 +276,7 @@ def process_image(image, weight=0.5):
     heatmap_cur = np.zeros_like(image[:, :, 0]).astype(np.uint8)
     add_heat(heatmap_cur, bbox_list)
     heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
-    heatmap_fifo[0][:][:] = heatmap_cur
+    heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
     heatmap_cur = apply_threshold(heatmap_cur, 6)  # 6 or 7
