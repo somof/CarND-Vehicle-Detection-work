@@ -32,7 +32,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                      transform_sqrt=True, vis=False, feature_vec=True):
     # Call with two outputs if vis==True
     if vis is True:
-        print('never reached code!')
         features, hog_image = hog(img, orientations=orient,
                                   pixels_per_cell=(pix_per_cell, pix_per_cell),
                                   cells_per_block=(cell_per_block, cell_per_block),
@@ -50,7 +49,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
 
 
 def bin_spatial(img, size=(32, 32)):
-    # print('  spat: ', np.max(img))
     # Use cv2.resize().ravel() to create the feature vector
     color1 = cv2.resize(img[:, :, 0], size).ravel()
     color2 = cv2.resize(img[:, :, 1], size).ravel()
@@ -58,15 +56,13 @@ def bin_spatial(img, size=(32, 32)):
     return np.hstack((color1, color2, color3))
 
 
-def color_hist(img, nbins=32, hist_range=(0, 1.0)):
-    # print('  hist: ', np.max(img))
+def color_hist(img, nbins=64, hist_range=(0, 1.0)):
     # Compute the histogram of the color channels separately
     channel1_hist = np.histogram(img[:, :, 0], bins=nbins, range=hist_range)
     channel2_hist = np.histogram(img[:, :, 1], bins=nbins, range=hist_range)
     channel3_hist = np.histogram(img[:, :, 2], bins=nbins, range=hist_range)
     # Concatenate the histograms into a single feature vector
-    hist_features = np.concatenate(
-        (channel1_hist[0], channel2_hist[0], channel3_hist[0]))
+    hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
     # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
@@ -74,7 +70,7 @@ def color_hist(img, nbins=32, hist_range=(0, 1.0)):
 def single_img_features(image,
                         color_space='YCrCb',
                         spatial_size=(32, 32),
-                        hist_bins=32, hist_range=(0, 255),
+                        hist_bins=64, hist_range=(0, 255),
                         orient=9, pix_per_cell=8, cell_per_block=2):
     features = []
     # 1) Apply color conversion
@@ -93,20 +89,8 @@ def single_img_features(image,
     for channel in range(img.shape[2]):
         hog_features.extend(get_hog_features(img[:, :, channel],
                                              orient, pix_per_cell, cell_per_block,
-                                             transform_sqrt=False,  # True,
-                                             vis=False, feature_vec=True))
-    # print(len(hog_features))
+                                             transform_sqrt=False,
+                                             vis=False,
+                                             feature_vec=True))
     features.append(hog_features)
-
-    # print('spa ', spatial_features.shape)  # 768 = (16, 16) x 3ch
-    # print('his ', hist_features.shape)  # 96 = 32bins x 3ch
-    # print('hog ', len(hog_features))  # 5292 = 7x7 x 4(?) x 9 x 3ch
-    # exit(0)
-    #  Feature vector length: 16740
-    #    using: 9 orientations 8 pixels per cell and 2 cells per block
-
-    # training
-    # Feature vector length: 16740
-    # 16740 - 768 - 96 = 15876 = 5292 x 3
-
     return np.concatenate(features)
