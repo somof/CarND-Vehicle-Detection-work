@@ -33,7 +33,7 @@ pix_per_cell   = 8  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
 spatial_size   = (32, 32)  # Spatial binning dimensions
 hist_bins      = 32  # Number of histogram bins
-
+transform_sqrt = False
 
 # Read in cars and notcars
 cars = []
@@ -65,6 +65,7 @@ def extract_features(imgs,
                      color_space='YCrCb',
                      spatial_size=(32, 32),
                      hist_bins=32,
+                     transform_sqrt=True,
                      orient=9, pix_per_cell=8, cell_per_block=2):
     # Create a list to append feature vectors to
     features = []
@@ -85,7 +86,7 @@ def extract_features(imgs,
                                            color_space=color_space,
                                            spatial_size=spatial_size,
                                            hist_bins=hist_bins, hist_range=hist_range,
-                                           transform_sqrt=True,
+                                           transform_sqrt=transform_sqrt,
                                            orient=orient, pix_per_cell=pix_per_cell, cell_per_block=cell_per_block)
         features.append(img_features)
 
@@ -97,6 +98,7 @@ car_features = extract_features(cars,
                                 color_space=color_space,
                                 spatial_size=spatial_size,
                                 hist_bins=hist_bins,
+                                transform_sqrt=transform_sqrt,
                                 orient=orient,
                                 pix_per_cell=pix_per_cell,
                                 cell_per_block=cell_per_block)
@@ -105,6 +107,7 @@ notcar_features = extract_features(notcars,
                                    color_space=color_space,
                                    spatial_size=spatial_size,
                                    hist_bins=hist_bins,
+                                   transform_sqrt=transform_sqrt,
                                    orient=orient,
                                    pix_per_cell=pix_per_cell,
                                    cell_per_block=cell_per_block)
@@ -122,8 +125,8 @@ y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
 
 # Split up data into randomized training and test sets
 rand_state = np.random.randint(0, 100)
-rand_state = np.random.RandomState(1)
-rand_state = 0
+# rand_state = np.random.RandomState(1)
+# rand_state = 0
 X_train, X_test, y_train, y_test = train_test_split(scaled_X, y, test_size=0.2, random_state=rand_state)
 
 print('Training/Test data size:', len(y_train), len(y_test))
@@ -154,6 +157,7 @@ dist_pickle["pix_per_cell"] = pix_per_cell
 dist_pickle["cell_per_block"] = cell_per_block
 dist_pickle["spatial_size"] = spatial_size
 dist_pickle["hist_bins"] = hist_bins
+dist_pickle["transform_sqrt"] = transform_sqrt
 
 pickle.dump(dist_pickle, open(filename, "wb"))
 
@@ -166,3 +170,4 @@ print('  pix_per_cell: ', pix_per_cell)
 print('  cell_per_block: ', cell_per_block)
 print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
+print('  transform_sqrt: ', transform_sqrt)

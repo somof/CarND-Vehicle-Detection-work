@@ -8,18 +8,14 @@ from functions_training import color_hist
 
 
 VIEW_WIDTH     = 3.7 * 5
-VEHICLE_HEIGHT = 1.75  # 1.65  # meter
+VEHICLE_HEIGHT = 1.5  # 1.65  # meter
 LANENUM        =  5
 FRAMENUM       =  5  # FRAMENO_0 is the current frame
 
 heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
-# distance_map = range(6, 30, 2)
-# distance_map = (7, 8, 9, 10, 11, 13, 15, 17, 20, 25, 30)
-# distance_map = (7, 9, 11, 14, 19, 25, 32)
-# distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18, 29)
-# distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
-distance_map = (6.6, 7.2, 8, 9, 10.5, 13)
+# distance_map = range(6, 19, 2)
+distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
 
 
 def set_perspective_matrix():
@@ -44,13 +40,14 @@ def set_perspective_matrix():
         y1 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
         search_area.append([[int(x0), int(y0)], [int(x1), int(y1)]])
-        print('{:4.1f} : ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(y, x0, y0, x1, y1))
+        print(' {:4.1f} : ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(y, x0, y0, x1, y1))
 
 
 def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-              orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+              transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
 
     img_tosearch = img[ystart:ystop, xstart:xstop, :]
+    # img_tosearch = img[ystart:ystop, :, :]
     ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
     if scale != 1:
         imshape = ctrans_tosearch.shape
@@ -72,19 +69,20 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
     # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
     window = 64
     nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
-    cells_per_step = 2  # Instead of overlap, define how many cells to step
+    cells_per_step = 1  # Instead of overlap, define how many cells to step
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step
     nysteps = max(1, nysteps)
     # print('  nyblocks: ', nyblocks)
 
     # Compute individual channel HOG features for the entire image
-    hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+    hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
+    hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
+    hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
     # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
 
-    # print('    step : {} x {}'.format(nxsteps, nysteps))
+    if 1 < nysteps:
+        print('    step : {} x {}'.format(nxsteps, nysteps))
 
     bbox = []
     for xb in range(nxsteps):
@@ -115,7 +113,7 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
             test_prediction = svc.predict(test_features)
 
             if test_prediction == 1:
-                xbox_left = np.int(xleft * scale)
+                xbox_left = np.int(xleft * scale + xstart)  # add offset
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
                 bbox.append([[xbox_left, ytop_draw + ystart],
@@ -125,7 +123,7 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
 
 
 def find_cars_multiscale(image, svc, X_scaler,
-                         orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+                         transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
 
     global search_area
 
@@ -135,9 +133,6 @@ def find_cars_multiscale(image, svc, X_scaler,
 
         width = area[1][0] - area[0][0]
         height = int(VEHICLE_HEIGHT * width / VIEW_WIDTH)
-        scale = 1.5
-        scale = 1.25
-        scale = height / 80.0
         scale = height / 64.0
 
         xstart = max(area[0][0], 0)
@@ -145,10 +140,11 @@ def find_cars_multiscale(image, svc, X_scaler,
         ystop = area[0][1]
         ystart = ystop - height
 
-        # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
-        # print('  scale: {:4.2f}'.format(scale))
+        print('  area: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f}) '.format(xstart, ystart, xstop, ystop), end='')
+        # print('  <- ', area, end='')
+        print('  scale: {:4.2f}'.format(scale))
         bbox = find_cars(image, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-                         orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+                         transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         if bbox:
             bbox_list.extend(bbox)
 
@@ -221,6 +217,7 @@ def select_bbox_with_heatmap(image, bbox_list, threshold=4):
 
     heatmap_cur = np.zeros_like(image[:, :, 0]).astype(np.uint8)
     add_heat(heatmap_cur, bbox_list)
+    # heatmap_cur = apply_threshold(heatmap_cur, 1)
 
     heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
     heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
@@ -242,7 +239,7 @@ def overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100)):
 
     for f in range(FRAMENUM):
         cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-        mini = np.clip(heatmap_fifo[f] * 16 + 10, 20, 250)
+        mini = np.clip(heatmap_fifo[f] * 8 + 10, 20, 250)
         mini = cv2.resize(mini, size, interpolation=cv2.INTER_NEAREST)
         mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
         draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini

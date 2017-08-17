@@ -22,6 +22,7 @@ pix_per_cell   = dist_pickle["pix_per_cell"]
 cell_per_block = dist_pickle["cell_per_block"]
 spatial_size   = dist_pickle["spatial_size"]
 hist_bins      = dist_pickle["hist_bins"]
+transform_sqrt = dist_pickle["transform_sqrt"]
 
 print('Restored into pickle:')
 print('  color_space: ', color_space)
@@ -32,6 +33,7 @@ print('  pix_per_cell: ', pix_per_cell)
 print('  cell_per_block: ', cell_per_block)
 print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
+print('  transform_sqrt: ', transform_sqrt)
 
 
 def process_image(image):
@@ -136,7 +138,7 @@ def process_image(image):
     # 8) Vehicles Detection
     draw_img = undist
     # 8-1) Sliding Windows Search
-    bbox_list = find_cars_multiscale(image, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
     # 8-2) Update Heatmap
     labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=20)
 
