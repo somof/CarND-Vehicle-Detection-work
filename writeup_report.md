@@ -163,9 +163,9 @@ def single_img_features(image,
     return np.concatenate(features)
 ```
 
-## 1.5. Features Normalization
+## 1.5. Features Standardization
 
-The collected features are normalized via StandardScaler() function imported from sklearn.preprocessing at line 108 - 111 in 'project_training.py' as follows.  
+The collected features are standardized via StandardScaler() function imported from sklearn.preprocessing at line 108 - 111 in 'project_training.py' as follows.  
 StandardScaler() removes the mean and scaling to unit variance from the features.
 
 Here, X is a np.array which contains features arrays from vehicle dataset and non-vehicle dataset provided by Udacity.
