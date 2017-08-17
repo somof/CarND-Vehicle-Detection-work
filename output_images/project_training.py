@@ -23,7 +23,7 @@ filename = filename + 'p'
 
 if os.path.exists(filename):
     print('pickle file already exists. : ', filename)
-    # exit(0)
+    exit(0)
 
 # Tweak these parameters and see how the results change.
 color_space    = 'YCrCb'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
