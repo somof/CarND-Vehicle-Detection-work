@@ -51,7 +51,7 @@ def process_image(image):
 
     # 8-1) Sliding Windows Search
     bbox_list = []
-    # bbox_list = find_cars_multiscale(image, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    bbox_list = find_cars_multiscale(image, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
     # 8-2) Update Heatmap
     labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=4)  # 6 or 7
@@ -90,7 +90,7 @@ clip1 = VideoFileClip('../test_video.mp4')
 frameno = 0
 reset_hetmap_fifo()
 for frame in clip1.iter_frames():
-    if frameno % 1 == 0:
+    if frameno % 2 == 0:
         print('frameno: {:5.0f}'.format(frameno))
         result = process_image(frame)
         img = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
@@ -109,7 +109,7 @@ clip1 = VideoFileClip('../project_video.mp4')
 frameno = 0
 reset_hetmap_fifo()
 for frame in clip1.iter_frames():
-    if 160 < frameno and frameno % 2 == 0:
+    if 160 < frameno and frameno % 10 == 0:
         print('frameno: {:5.0f}'.format(frameno))
         result = process_image(frame)
         img = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)

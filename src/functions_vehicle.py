@@ -7,17 +7,18 @@ from functions_training import bin_spatial
 from functions_training import color_hist
 
 
-VIEW_WIDTH     = 3.7 * 7
+VIEW_WIDTH     = 3.7 * 5
 VEHICLE_HEIGHT = 1.5  # 1.65  # meter
 LANENUM        =  5
 FRAMENUM       =  6  # FRAMENO_0 is the current frame
 
 heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
-distance_map = range(6, 30, 2)
-distance_map = (7, 8, 9, 10, 11, 13, 15, 17, 20, 25, 30)
-distance_map = (7, 9, 11, 14, 19, 25, 32)
-distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18, 29)
+# distance_map = range(6, 30, 2)
+# distance_map = (7, 8, 9, 10, 11, 13, 15, 17, 20, 25, 30)
+# distance_map = (7, 9, 11, 14, 19, 25, 32)
+# distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18, 29)
+distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
 
 
 def set_perspective_matrix():
@@ -130,6 +131,7 @@ def find_cars_multiscale(image, svc, X_scaler,
     bbox_list = []
     for area in search_area:
         scale = 1.5
+        scale = 1.25
 
         width = area[1][0] - area[0][0]
         height = int(VEHICLE_HEIGHT * width / VIEW_WIDTH)
