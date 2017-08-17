@@ -239,7 +239,7 @@ def overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100)):
 
     for f in range(FRAMENUM):
         cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-        mini = np.clip(heatmap_fifo[f] * 8 + 10, 20, 250)
+        mini = np.clip(heatmap_fifo[f] * 4 + 10, 20, 255)
         mini = cv2.resize(mini, size, interpolation=cv2.INTER_NEAREST)
         mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
         draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
