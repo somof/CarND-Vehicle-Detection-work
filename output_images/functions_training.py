@@ -71,6 +71,7 @@ def single_img_features(image,
                         color_space='YCrCb',
                         spatial_size=(32, 32),
                         hist_bins=64, hist_range=(0, 255),
+                        transform_sqrt=False,
                         orient=9, pix_per_cell=8, cell_per_block=2):
     features = []
     # 1) Apply color conversion
@@ -89,8 +90,7 @@ def single_img_features(image,
     for channel in range(img.shape[2]):
         hog_features.extend(get_hog_features(img[:, :, channel],
                                              orient, pix_per_cell, cell_per_block,
-                                             transform_sqrt=False,
-                                             vis=False,
-                                             feature_vec=True))
+                                             transform_sqrt=transform_sqrt,
+                                             vis=False, feature_vec=True))
     features.append(hog_features)
     return np.concatenate(features)

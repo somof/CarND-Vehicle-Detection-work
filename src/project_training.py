@@ -11,7 +11,7 @@ from functions_training import single_img_features
 
 use_float_image = False
 use_small_number_sample = False  # True
-use_smallset = True  # False
+use_smallset = False  # True
 
 filename = 'svc_pickle.'
 if use_float_image:
@@ -32,7 +32,7 @@ orient         = 9  # HOG orientations
 pix_per_cell   = 8  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
 spatial_size   = (32, 32)  # Spatial binning dimensions
-hist_bins      = 64  # Number of histogram bins
+hist_bins      = 32  # Number of histogram bins
 
 
 # Read in cars and notcars
@@ -85,6 +85,7 @@ def extract_features(imgs,
                                            color_space=color_space,
                                            spatial_size=spatial_size,
                                            hist_bins=hist_bins, hist_range=hist_range,
+                                           transform_sqrt=True,
                                            orient=orient, pix_per_cell=pix_per_cell, cell_per_block=cell_per_block)
         features.append(img_features)
 
@@ -121,6 +122,8 @@ y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
 
 # Split up data into randomized training and test sets
 rand_state = np.random.randint(0, 100)
+rand_state = np.random.RandomState(1)
+rand_state = 0
 X_train, X_test, y_train, y_test = train_test_split(scaled_X, y, test_size=0.2, random_state=rand_state)
 
 print('Training/Test data size:', len(y_train), len(y_test))

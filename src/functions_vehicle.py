@@ -8,9 +8,9 @@ from functions_training import color_hist
 
 
 VIEW_WIDTH     = 3.7 * 5
-VEHICLE_HEIGHT = 1.5  # 1.65  # meter
+VEHICLE_HEIGHT = 1.75  # 1.65  # meter
 LANENUM        =  5
-FRAMENUM       =  6  # FRAMENO_0 is the current frame
+FRAMENUM       =  5  # FRAMENO_0 is the current frame
 
 heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
@@ -18,7 +18,8 @@ heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 # distance_map = (7, 8, 9, 10, 11, 13, 15, 17, 20, 25, 30)
 # distance_map = (7, 9, 11, 14, 19, 25, 32)
 # distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18, 29)
-distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
+# distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
+distance_map = (6.6, 7.2, 8, 9, 10.5, 13)
 
 
 def set_perspective_matrix():
@@ -43,12 +44,11 @@ def set_perspective_matrix():
         y1 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
         #
         search_area.append([[int(x0), int(y0)], [int(x1), int(y1)]])
-        print('{:3.0f} : ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(y, x0, y0, x1, y1))
+        print('{:4.1f} : ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(y, x0, y0, x1, y1))
 
 
 def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-              hog1, hog2, hog3, orient, pix_per_cell, cell_per_block,
-              spatial_size, hist_bins):
+              orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
 
     img_tosearch = img[ystart:ystop, xstart:xstop, :]
     ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
@@ -58,6 +58,7 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
                                      (np.int(imshape[1] / scale),
                                       np.int(imshape[0] / scale)))
 
+    # print('   shape :', ctrans_tosearch.shape)
     ch1 = ctrans_tosearch[:, :, 0]
     ch2 = ctrans_tosearch[:, :, 1]
     ch3 = ctrans_tosearch[:, :, 2]
@@ -66,20 +67,24 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
     nxblocks = (ch1.shape[1] // pix_per_cell) - cell_per_block + 1
     nyblocks = (ch1.shape[0] // pix_per_cell) - cell_per_block + 1
     # nfeat_per_block = orient * cell_per_block**2
+    # print('  nyblocks: ', nyblocks)
 
     # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
     window = 64
     nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
-    cells_per_step = 2  # 2  # Instead of overlap, define how many cells to step
+    cells_per_step = 2  # Instead of overlap, define how many cells to step
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step
+    nysteps = max(1, nysteps)
+    # print('  nyblocks: ', nyblocks)
 
     # Compute individual channel HOG features for the entire image
-    if hog1 is None or hog2 is None or hog1 is None:
-        hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-        hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-        hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-        # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
+    hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+    hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+    hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
+    # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
+
+    # print('    step : {} x {}'.format(nxsteps, nysteps))
 
     bbox = []
     for xb in range(nxsteps):
@@ -116,7 +121,7 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
                 bbox.append([[xbox_left, ytop_draw + ystart],
                              [xbox_left + win_draw, ytop_draw + win_draw + ystart]])
 
-    return bbox, hog1, hog2, hog3
+    return bbox
 
 
 def find_cars_multiscale(image, svc, X_scaler,
@@ -124,25 +129,26 @@ def find_cars_multiscale(image, svc, X_scaler,
 
     global search_area
 
-    hog1 = None
-    hog2 = None
-    hog3 = None
-
     bbox_list = []
     for area in search_area:
-        scale = 1.5
-        scale = 1.25
+        # print('  area ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(area[0][0], area[0][1], area[1][0], area[1][1]))
 
         width = area[1][0] - area[0][0]
         height = int(VEHICLE_HEIGHT * width / VIEW_WIDTH)
+        scale = 1.5
+        scale = 1.25
+        scale = height / 80.0
+        scale = height / 64.0
 
-        xstart = max(0, area[0][0])
-        xstop = min(1279, area[1][0])
+        xstart = max(area[0][0], 0)
+        xstop = min(area[1][0], 1279)
         ystop = area[0][1]
         ystart = ystop - height
 
-        bbox, hog1, hog2, hog3 = find_cars(image, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
-                                           hog1, hog2, hog3, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
+        # print('  scale: {:4.2f}'.format(scale))
+        bbox = find_cars(image, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+                         orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         if bbox:
             bbox_list.extend(bbox)
 

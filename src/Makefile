@@ -10,7 +10,7 @@ endif
 
 
 all: 
-	#${PYTHONC} project_training.py
+	${PYTHONC} project_training.py
 	#${PYTHONC} project_search.py
 	${PYTHONC} project_pipeline.py
 

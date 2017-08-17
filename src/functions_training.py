@@ -65,8 +65,7 @@ def color_hist(img, nbins=64, hist_range=(0, 1.0)):
     channel2_hist = np.histogram(img[:, :, 1], bins=nbins, range=hist_range)
     channel3_hist = np.histogram(img[:, :, 2], bins=nbins, range=hist_range)
     # Concatenate the histograms into a single feature vector
-    hist_features = np.concatenate(
-        (channel1_hist[0], channel2_hist[0], channel3_hist[0]))
+    hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
     # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
@@ -75,6 +74,7 @@ def single_img_features(image,
                         color_space='YCrCb',
                         spatial_size=(32, 32),
                         hist_bins=64, hist_range=(0, 255),
+                        transform_sqrt=False,
                         orient=9, pix_per_cell=8, cell_per_block=2):
     features = []
     # 1) Apply color conversion
@@ -93,7 +93,7 @@ def single_img_features(image,
     for channel in range(img.shape[2]):
         hog_features.extend(get_hog_features(img[:, :, channel],
                                              orient, pix_per_cell, cell_per_block,
-                                             transform_sqrt=False,  # True,
+                                             transform_sqrt=transform_sqrt,
                                              vis=False, feature_vec=True))
     # print(len(hog_features))
     features.append(hog_features)
