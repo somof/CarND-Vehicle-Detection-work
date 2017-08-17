@@ -58,7 +58,7 @@ def bin_spatial(img, size=(32, 32)):
     return np.hstack((color1, color2, color3))
 
 
-def color_hist(img, nbins=32, hist_range=(0, 1.0)):
+def color_hist(img, nbins=64, hist_range=(0, 1.0)):
     # print('  hist: ', np.max(img))
     # Compute the histogram of the color channels separately
     channel1_hist = np.histogram(img[:, :, 0], bins=nbins, range=hist_range)
@@ -74,7 +74,7 @@ def color_hist(img, nbins=32, hist_range=(0, 1.0)):
 def single_img_features(image,
                         color_space='YCrCb',
                         spatial_size=(32, 32),
-                        hist_bins=32, hist_range=(0, 255),
+                        hist_bins=64, hist_range=(0, 255),
                         orient=9, pix_per_cell=8, cell_per_block=2):
     features = []
     # 1) Apply color conversion

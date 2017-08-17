@@ -8,7 +8,7 @@ PYTHONC = ../../../../src/miniconda3/envs/carnd-term1/bin/python
 PYTHONG = ../../../../src/miniconda3/envs/carnd-term1/bin/python
 endif
 
-train: 
+train:
 	${PYTHONC} project_training.py
 
 video:

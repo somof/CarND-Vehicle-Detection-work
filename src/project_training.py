@@ -1,9 +1,9 @@
-import matplotlib.image as mpimg
 import os
-import numpy as np
 import pickle
 import glob
 import time
+import numpy as np
+import matplotlib.image as mpimg
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -11,7 +11,7 @@ from functions_training import single_img_features
 
 use_float_image = False
 use_small_number_sample = False  # True
-use_smallset = False  # True
+use_smallset = True  # False
 
 filename = 'svc_pickle.'
 if use_float_image:
@@ -31,8 +31,8 @@ color_space    = 'YCrCb'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
 orient         = 9  # HOG orientations
 pix_per_cell   = 8  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
-spatial_size   = (32, 32)   # (64, 64)  (32, 32)  (16, 16)  # Spatial binning dimensions
-hist_bins      = 32  # Number of histogram bins
+spatial_size   = (32, 32)  # Spatial binning dimensions
+hist_bins      = 64  # Number of histogram bins
 
 
 # Read in cars and notcars
@@ -56,7 +56,7 @@ print('notcars data length:', len(notcars))
 # Reduce the sample size because
 # The quiz evaluator times out after 13s of CPU time
 if use_small_number_sample:
-    sample_size = 1000
+    sample_size = 500
     cars = cars[0:sample_size]
     notcars = notcars[0:sample_size]
 
@@ -109,6 +109,7 @@ notcar_features = extract_features(notcars,
                                    cell_per_block=cell_per_block)
 
 X = np.vstack((car_features, notcar_features)).astype(np.float64)
+
 # Fit a per-column scaler
 X_scaler = StandardScaler().fit(X)
 # Apply the scaler to X
@@ -134,8 +135,8 @@ svc = LinearSVC()
 
 t = time.time()  # Check the training time for the SVC
 svc.fit(X_train, y_train)
-
 t2 = time.time()
+
 print('  ', round(t2 - t, 2), 'Seconds to train SVC...')
 # Check the score of the SVC
 print('  Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
