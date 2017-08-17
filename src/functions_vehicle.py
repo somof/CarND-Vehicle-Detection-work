@@ -79,7 +79,7 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
         hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
         hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
         hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=True, feature_vec=False)
-    # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
+        # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
 
     bbox = []
     for xb in range(nxsteps):
@@ -222,7 +222,7 @@ def select_bbox_with_heatmap(image, bbox_list, threshold=4):
     for f in range(1, FRAMENUM):
         heatmap_cur += heatmap_fifo[f][:][:]
 
-    heatmap_cur = apply_threshold(heatmap_cur, 4)  # 6 or 7
+    heatmap_cur = apply_threshold(heatmap_cur, threshold)
     labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
 
     return labelnum, contours

@@ -223,7 +223,9 @@ Training via SVC
 
 # 2. Sliding Window Search
 
+## 2.1. Multi-scale search area
 
+TODO コードを修正して書き直す
 
 
 ```
@@ -262,182 +264,134 @@ frameno:     0
 ```
 
 
+## 2.2. Reusing HOG features
 
-
-# 2. HOG feature and Other Features to Detect Vehicles
-
-Explain how you settled on your final choice of HOG parameters.
-
-- For each channel and with your HOG parameters above, the HOG feature vector is 1764 long
-- The spatial binning feature vector is 32 x 32 x 3 = 3072 long -> 16 x 16 x 3 = 768
-- The histogram feature vector is 32 x 3 = 96
-- Therefore, using only 1 HOG channel gives you a 1764 + 3072 + 96 = 4932 vector.
-  This is one of the dimensions quoted by the error message.
-- But your find_cars() function uses all 3 HOG channels -- see these lines:
-
-Therefore the resulting HOG feature vector is 1764 x 3 = 5292. 
-Add to that the spatial and histogram features and you get 5292 + 3072 + 96 = 8460, 
-which is the other number quoted by the error message.
+TODO コードを修正して書き直す
 
 
 <img width=400 src="output_images/fig/hog-sub.jpg">
+
+
+## 2.3. Heatmap FIFO and Outlier rejection
+
+select_bbox_with_heatmap() function in 'functions_vehicle.py' holds a multi-frame heatmap and keeps it update as follows.  
+
+Pixels which last FRAMENUM summation value is lower than Threshold are rejected.
+Then the summated heatmap are labeld via cv2.connectedComponentsWithStats().  
+Thus, by having a multi frame heatmap, most outliers could be rejected.
+
+select_bbox_with_heatmap() returns the label number and all contour information.
+
+```
+def select_bbox_with_heatmap(image, bbox_list, threshold=4):
+
+    global heatmap_fifo
+
+    heatmap_cur = np.zeros_like(image[:, :, 0]).astype(np.uint8)
+    add_heat(heatmap_cur, bbox_list)
+
+    heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
+    heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
+
+    for f in range(1, FRAMENUM):
+        heatmap_cur += heatmap_fifo[f][:][:]
+
+    heatmap_cur = apply_threshold(heatmap_cur, threshold)
+    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
+
+    return labelnum, contours
+```
+
+## 2.4. Threshold for Heatmap
+
+TODO 何もしない場合のHeatmapの参考画像を作る
+
+TODO Heatmapの処理画像を作る
+
+I recorded the positions of positive detections in each frame of the
+video.  From the positive detections I created a heatmap and then
+thresholded that map to identify vehicle positions.  I then used
+`scipy.ndimage.measurements.label()` to identify individual blobs in
+the heatmap.  I then assumed each blob corresponded to a vehicle.  I
+constructed bounding boxes to cover the area of each blob detected.
+
+Here's an example result showing the heatmap from a series of frames
+of video, the result of `scipy.ndimage.measurements.label()` and the
+bounding boxes then overlaid on the last frame of video:
+
+
+
+
+
+## 2.5. Detected Vehicles
+
+TODO 処理画像を載せる
+
+
 
 <!--
 <img width=400 src="output_images/fig/car-and-hog.jpg">
 <img width=400 src="output_images/fig/labels_map.png">
 -->
 
+# 3. Pipeline on a video stream
 
+## 3.1. Pipeline Details
 
-## Option
-- color transform 
-- binned color features
-- histograms of color
-
-# 3. Training with Linear SVM classifier
-
-I took Udacity provided dataset to classify vehicles.
-
-# 4. Sliding-Window Technique and Vehicle Tracking
-# 5. Rejecting Outliers and follow detected vehicles.
-Heat-map Creation of recurring detections frame by frame 
-rejecting outliers and follow detected vehicles.
-Estimate a bounding box for vehicles detected.
-
-# 6. Run pipeline on a video stream
 start with the test_video.mp4 and later implement on full project_video.mp4
 
-## Udacity provided Video
 
-test_video.mp4
-
-project_video.mp4
-
-<!--
-## Hakone Video
-
-60MB 比較的車が多い
-LegacyVideo_05_40_20170725_135613.mp4
-
-205MB 後半に工事車両
-LegacyVideo_05_40_20170725_140502
-
-621MB 霧、ワイパー
-LegacyVideo_05_40_20170725_144407
--->
+TODO 演算時間を載せる
 
 
+```
+def process_image(image):
 
-# 7. Conclusion and Discussion
+    # 8) Vehicles Detection
+    draw_img = np.copy(image)
+    t1 = time.time()  # Check the training time for the SVC
 
+    # 8-1) Sliding Windows Search
+    bbox_list = []
+    # bbox_list = find_cars_multiscale(image, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
+    # 8-2) Update Heatmap
+    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=4)  # 6 or 7
 
-  ** Don't forget to normalize your features and randomize **
-
-<!--
-# Sample Writeup
-
-## test_images:
-Some example images for testing your pipeline on single frames are located in the test_images folder. 
-
-## ouput_images
-To help the reviewer examine your work, 
-please save examples of the output from each stage of your pipeline in the folder called ouput_images, 
-and include them in your writeup for the project by describing what each image shows. 
-
-## input videos
-The video called project_video.mp4 is the video your pipeline should work well on.
-
-As an optional challenge Once you have a working pipeline for vehicle detection, 
-add in your lane-finding algorithm from the last project to do simultaneous lane-finding and vehicle detection!
-
-If you're feeling ambitious (also totally optional though), 
-don't stop there! We encourage you to go out and take video of your own, 
-and show us how you would implement this project on a new video!
+    t2 = time.time()
+    print('  ', round(t2 - t1, 2), 'Seconds to process a image')
 
 
-[//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
+    # Overlay Vehicle BBoxes
+    for nlabel in range(1, labelnum): 
+        x, y, w, h, size = contours[nlabel]
+        cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
+
+    # Draw mini Heatmap
+    draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
 
 
-# Histogram of Oriented Gradients (HOG)
-
-## 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
-
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
-
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
-
-![alt text][image1]
-
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
-
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+    return draw_img
+```
 
 
-![alt text][image2]
+## 3.3. Final video Output with LaneLines Detection
 
-## 2. Explain how you settled on your final choice of HOG parameters.
-
-I tried various combinations of parameters and...
-
-## 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
-
-I trained a linear SVM using...
-
-# Sliding Window Search
-
-## 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
-
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
-
-![alt text][image3]
-
-## 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
-
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
-
-![alt text][image4]
-
-# Video Implementation
-
-## 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 Here's a [link to my video result](./project_video.mp4)
 
 
-## 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
-
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
-
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
-
-# Here are six frames and their corresponding heatmaps:
-
-![alt text][image5]
-
-# Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-# Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
 
 
+# 4. Conclusion and Discussion
+
+## 4.1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 
-# Discussion
+Here I'll talk about the approach I took, what techniques I used, what
+worked and why, where the pipeline might fail and how I might improve
+it if I were going to pursue this project further.
 
-## 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
-
--->
 
 <!--
 # Dataset Prepaeration

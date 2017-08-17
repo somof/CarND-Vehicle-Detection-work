@@ -34,7 +34,7 @@ print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
 
 
-def process_image(image, weight=0.5):
+def process_image(image):
 
     # 1) Undistort using mtx and dist
     undist = cv2.undistort(image, mtx, dist, None, mtx)

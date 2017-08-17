@@ -43,7 +43,7 @@ print('  spatial_size: ', spatial_size)
 print('  hist_bins: ', hist_bins)
 
 
-def process_image(image, weight=0.5):
+def process_image(image):
 
     # 8) Vehicles Detection
     draw_img = np.copy(image)
@@ -54,7 +54,7 @@ def process_image(image, weight=0.5):
     # bbox_list = find_cars_multiscale(image, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
     # 8-2) Update Heatmap
-    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=4)
+    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=4)  # 6 or 7
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
