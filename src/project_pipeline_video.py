@@ -141,7 +141,7 @@ def process_image(image):
     labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=4)
 
     # X) Drawing
-    for nlabel in range(1, labelnum): 
+    for nlabel in range(1, labelnum):
         x, y, w, h, size = contours[nlabel]
         cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
 
@@ -180,11 +180,10 @@ def process_image(image):
     elif vehicle_offset > 0:
         infotext = 'car position {:4.2f}m right, curvature {:7.1f}m'.format(vehicle_offset, (left_curverad + right_curverad) / 2)
     else:
-        infotext = 'car position        center, curvature {:7.1f}m'.format((left_curverad + right_curverad)/2)
+        infotext = 'car position        center, curvature {:7.1f}m'.format((left_curverad + right_curverad) / 2)
     cv2.putText(draw_img, infotext, (30, 40), font, font_size, (255, 255, 255))
 
     return cv2.addWeighted(draw_img, 1, newwarp, 0.3, 0)
-
 
 
 ######################################

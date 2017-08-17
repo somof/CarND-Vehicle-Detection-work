@@ -22,7 +22,7 @@ def abs_sobel_thresh(gray, orient='x', sobel_kernel=3, sobel_thresh=(0, 255)):
     if orient == 'y':
         abs_sobel = np.absolute(cv2.Sobel(gray, cv2.CV_64F, 0, 1))
     # Rescale back to 8 bit integer
-    scaled_sobel = np.uint8(255*abs_sobel/np.max(abs_sobel))
+    scaled_sobel = np.uint8(255 * abs_sobel / np.max(abs_sobel))
     # Create a copy and apply the threshold
     binary_output = np.zeros_like(scaled_sobel)
     # Here I'm using inclusive (>=, <=) thresholds, but exclusive is ok too
@@ -38,14 +38,14 @@ def mag_thresh(gray, sobel_kernel=3, mag_thresh=(0, 255)):
     gradmag = np.sqrt(sobelx**2 + sobely**2)
     # Rescale to 8 bit
     scale_factor = np.max(gradmag) / 255
-    gradmag = (gradmag/scale_factor).astype(np.uint8)
+    gradmag = (gradmag / scale_factor).astype(np.uint8)
     # Create a binary gray of ones where threshold is met, zeros otherwise
     binary_output = np.zeros_like(gradmag)
     binary_output[(gradmag >= mag_thresh[0]) & (gradmag <= mag_thresh[1])] = 1
     return binary_output
 
 
-def dir_threshold(gray, sobel_kernel=3, thresh=(0, np.pi/2)):
+def dir_threshold(gray, sobel_kernel=3, thresh=(0, np.pi / 2)):
     # Calculate the x and y gradients
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
@@ -132,7 +132,6 @@ def create_binary_image_adv(image):
 
     combined = yellow | white | white_2 | white_3
     return combined
-
 
 
 def create_binary_image(image):
@@ -297,7 +296,7 @@ def measure_curvature(xs, ys, ym_per_pix, xm_per_pix):
 
 
 def fit_quadratic_polynomial(c_left_fit, c_right_fit, image):
-    ploty = np.linspace(0, image.shape[0]-1, image.shape[0])
+    ploty = np.linspace(0, image.shape[0] - 1, image.shape[0])
     left_fitx = c_left_fit[0] * ploty**2 + c_left_fit[1] * ploty + c_left_fit[2]
     right_fitx = c_right_fit[0] * ploty**2 + c_right_fit[1] * ploty + c_right_fit[2]
 
@@ -349,7 +348,7 @@ def sanity_chack_curverad(left_curverad, right_curverad, diff_curverad_thresh=40
 def sanity_chack_roadwidth(left_fitx, right_fitx, thresh0=(300, 1200), thresh1=(300, 1200), thresh2=(300, 1200)):
 
     road_width0 = right_fitx[0] - left_fitx[0]
-    road_width1 = right_fitx[len(right_fitx)//2] - left_fitx[len(left_fitx)//2]
+    road_width1 = right_fitx[len(right_fitx) // 2] - left_fitx[len(left_fitx) // 2]
     road_width2 = right_fitx[-1] - left_fitx[-1]
 
     if road_width0 < thresh0[0] or thresh0[1] < road_width0:

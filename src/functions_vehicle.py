@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from scipy.ndimage.measurements import label
+# from scipy.ndimage.measurements import label
 from functions_training import convert_color
 from functions_training import get_hog_features
 from functions_training import bin_spatial
@@ -18,7 +18,6 @@ distance_map = range(6, 30, 2)
 distance_map = (7, 8, 9, 10, 11, 13, 15, 17, 20, 25, 30)
 distance_map = (7, 9, 11, 14, 19, 25, 32)
 distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18, 29)
-
 
 
 def set_perspective_matrix():
@@ -153,7 +152,6 @@ def overlay_search_area(draw_img):
     global search_area
 
     for area in search_area:
-        scale = 1.5
 
         width = area[1][0] - area[0][0]
         height = int(VEHICLE_HEIGHT * width / VIEW_WIDTH)

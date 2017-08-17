@@ -59,9 +59,7 @@ def process_image(image):
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
 
-
     # X) Drawing
-
     # display search area and each detected bboxes
     draw_img = overlay_search_area(draw_img)
     # for bbox in bbox_list:
@@ -69,13 +67,12 @@ def process_image(image):
     #     cv2.rectangle(draw_img, tuple(bbox[0]), tuple(bbox[1]), (0, 0, 255), 1)
 
     # X) Overlay Vehicle BBoxes
-    for nlabel in range(1, labelnum): 
+    for nlabel in range(1, labelnum):
         x, y, w, h, size = contours[nlabel]
         cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
 
     # X) Draw mini Heatmap
     draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
-
 
     return draw_img
 
@@ -89,23 +86,23 @@ set_perspective_matrix()
 ######################################
 # process frame by frame for developing
 
-# clip1 = VideoFileClip('../test_video.mp4')
-# frameno = 0
-# reset_hetmap_fifo()
-# for frame in clip1.iter_frames():
-#     if frameno % 1 == 0:
-#         print('frameno: {:5.0f}'.format(frameno))
-#         result = process_image(frame)
-#         img =  cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
-#         cv2.imshow('frame', img)
-#         if frameno % 10 == 0:
-#             filename = '{}_{:04.0f}fr.jpg'.format('test_video', frameno)
-#             # if not os.path.exists(filename):
-#             cv2.imwrite(filename, img)
-#     frameno += 1
-#     if cv2.waitKey(1) & 0xFF == ord('q'):
-#         break
-# cv2.destroyAllWindows()
+clip1 = VideoFileClip('../test_video.mp4')
+frameno = 0
+reset_hetmap_fifo()
+for frame in clip1.iter_frames():
+    if frameno % 1 == 0:
+        print('frameno: {:5.0f}'.format(frameno))
+        result = process_image(frame)
+        img = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+        cv2.imshow('frame', img)
+        if frameno % 10 == 0:
+            filename = '{}_{:04.0f}fr.jpg'.format('test_video', frameno)
+            # if not os.path.exists(filename):
+            # cv2.imwrite(filename, img)
+    frameno += 1
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cv2.destroyAllWindows()
 
 
 clip1 = VideoFileClip('../project_video.mp4')
@@ -115,15 +112,15 @@ for frame in clip1.iter_frames():
     if 160 < frameno and frameno % 2 == 0:
         print('frameno: {:5.0f}'.format(frameno))
         result = process_image(frame)
-        img =  cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+        img = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
         cv2.putText(img, 'frame {}'.format(frameno), (50, 710), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
         cv2.imshow('frame', img)
         if frameno == 350:
             filename = '{}_{:04.0f}fr.jpg'.format('project_video', frameno)
             # if not os.path.exists(filename):
-            cv2.imwrite(filename, img[300:720, :, :])
-            cv2.waitKey(1000)
-            exit(0)
+            # cv2.imwrite(filename, img[300:720, :, :])
+            # cv2.waitKey(1000)
+            # exit(0)
     frameno += 1
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
