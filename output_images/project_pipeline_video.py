@@ -140,7 +140,7 @@ def process_image(image):
     # 8-1) Sliding Windows Search
     bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
     # 8-2) Update Heatmap
-    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=18)
+    labelnum, contours, centroids = select_bbox_with_heatmap(image, bbox_list, threshold=18)
 
     # X) Drawing
     for nlabel in range(1, labelnum):
@@ -205,7 +205,8 @@ Minv = cv2.getPerspectiveTransform(perspective_dst, perspective_src)
 ######################################
 # set Perspective Matrix
 
-set_perspective_matrix()
+set_search_area()
+
 ######################################
 # output to video files
 

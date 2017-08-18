@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-# from scipy.ndimage.measurements import label
 from functions_training import convert_color
 from functions_training import get_hog_features
 from functions_training import bin_spatial
@@ -16,6 +15,8 @@ heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 
 # distance_map = range(6, 19, 2)
 distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
+
+car_positions = np.zeros((FRAMENUM, int(max(distance_map)), LANENUM), dtype=np.uint8)
 
 
 def set_search_area():
@@ -69,7 +70,7 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
     # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
     window = 64
     nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
-    cells_per_step = 2  # Instead of overlap, define how many cells to step
+    cells_per_step = 1  # Instead of overlap, define how many cells to step
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step
     nysteps = max(1, nysteps)
@@ -222,27 +223,95 @@ def select_bbox_with_heatmap(image, bbox_list, threshold=4):
     heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
     heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
 
+    heatmap_sum = np.zeros_like(image[:, :, 0]).astype(np.uint8)
     for f in range(1, FRAMENUM):
-        heatmap_cur += heatmap_fifo[f][:][:]
+        heatmap_sum += heatmap_fifo[f][:][:]
 
-    heatmap_cur = apply_threshold(heatmap_cur, threshold)
-    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
+    heatmap_sum = apply_threshold(heatmap_sum, threshold)
+    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_sum)
 
-    return labelnum, contours
+    # heatmap_cur[heatmap_sum <= threshold] = 0
+    # labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
+
+    return labelnum, contours, centroids
 
 
 def overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100)):
 
     font_size = 0.5
-    font = cv2.FONT_HERSHEY_DUPLEX
     font = cv2.FONT_HERSHEY_COMPLEX
-
     for f in range(FRAMENUM):
         cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-        mini = np.clip(heatmap_fifo[f] * 4 + 10, 20, 255)
+        mini = np.clip(heatmap_fifo[f] * 4 - 1, 0, 255)
         mini = cv2.resize(mini, size, interpolation=cv2.INTER_NEAREST)
-        mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
+        # mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
+        mini = cv2.applyColorMap(mini, cv2.COLORMAP_JET)
         draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
         px += mini.shape[1] + 10
 
     return draw_img
+
+
+def reset_car_positions():
+    car_positions = np.zeros((FRAMENUM, int(max(distance_map)), LANENUM), dtype=np.uint8)
+
+
+def hold_car_positions(contours, centroids):
+    global M2inv, car_positions
+    # car_positions[FRAMENUM][LANE_NUM][DISTANCE]
+
+    car_positions[1:FRAMENUM, :, :] = car_positions[0:FRAMENUM - 1, :, :]
+    car_positions[0][:][:] = np.zeros((1, int(max(distance_map)), LANENUM), dtype=np.uint8) # 
+
+    # for box in contours:
+    #     x = box[0] + box[2] / 2
+    #     y = box[1]
+    for cont, gp in zip(contours, centroids):
+        print(gp)
+        x = gp[0]
+        y = gp[1]  # + cont[3] / 2
+        x3d = (M2inv[0][0] * x + M2inv[0][1] * y + M2inv[0][2]) / (M2inv[2][0] * x + M2inv[2][1] * y + M2inv[2][2])
+        y3d = (M2inv[1][0] * x + M2inv[1][1] * y + M2inv[1][2]) / (M2inv[2][0] * x + M2inv[2][1] * y + M2inv[2][2])
+
+
+        # 5lane: -9.25 ... 9.25
+        laneno = int((x3d + 9.25) / 3.7 + 0.5)
+        distance = int(min(y3d, max(distance_map) - 1))
+        # if LANE_NUM <= laneno:
+        #     print('lane no is ', laneno, ' >= ', LANE_NUM)
+        # if DISTANCE_NUM <= distance:
+        #     print('distance is ', distance * DISTANCE_STEP, ' >= ', DISTANCE)
+
+        # print(box, ' -> ', x, y, ' -> ', x3d, y3d, ' -> ', laneno, distance)
+        if 0 <= distance and distance < max(distance_map) and 0 <= laneno and laneno < LANENUM:
+            car_positions[0][distance][laneno] += 1
+            # if distance < max(distance_map) - 1:
+            #     car_positions[0][distance + 1][laneno] += 1
+            # if distance < max(distance_map) - 2:
+            #     car_positions[0][distance + 2][laneno] += 1
+
+
+def draw_car_positions(img, px, py):
+    font_size = 0.5
+    cv2.putText(img, 'vehicle map', (px, py - 10), cv2.FONT_HERSHEY_DUPLEX, font_size, (255, 255, 255))
+    posi = car_positions[0] * 10
+    for l in range(LANENUM):
+        mini = np.clip(posi * 40 + 20, 20, 240)
+        mini = cv2.resize(mini[:, l], (20, 100), interpolation=cv2.INTER_NEAREST)
+        mini = cv2.flip(mini, 0)
+        mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
+        img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
+        px += 25
+
+    # font_size = 0.5
+    # for f in range(FRAMENUM):
+    #     cv2.putText(img, 'frame {}'.format(f), (px, py - 10), cv2.FONT_HERSHEY_DUPLEX, font_size, (255, 255, 255))
+    #     posi = car_positions[f]
+    #     mini = np.clip(posi * 40 + 20, 20, 240)
+    #     mini = cv2.resize(mini, (50, 180), interpolation=cv2.INTER_NEAREST)
+    #     mini = cv2.flip(mini, 0)
+    #     mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
+    #     img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
+    #     px += mini.shape[1] + 10
+
+    return img
