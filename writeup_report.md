@@ -1,24 +1,5 @@
 Vehicle Detection Project
 --------------------------------
-<!--
-TODO 
-
-- [x] HOG特徴量で SVM Classifierを学習させる
-  - [x] 他の特徴量を加えて認識率を向上させる
-  - [x] 正規化とランダマイズを確実に施す
-- [x] sliding-window technique で車両認識を行う
-  - [x] スキャン方法と範囲を工夫して、FPと演算量を削減する
-  - [x] ☆HOG計算枠と認識の枠がズレているのを修正する
-  - [x] Perspectiveの値が実際と異なっているのを修正する 実測で → 目合せで完了
-  - [x] ゴミフィルタが機能していないのを修正する → 変数の初期化忘れ
-  - [x] スケーラの値を確認する
-  - [x] heatmapに加算する際に、距離に応じて位置を修正する
-- [ ] ビデオファイルを作成するpipelineの説明
-  - [x] heat mapを用いて、 outlierを除外し、見付けた車両をたどる
-  - [ ] 既検出の自動車をトラッキングしてFN/FPを削減する
-  - [ ] 目安、10FPSまで高速化する
-- [ ] Estimate a bounding box for vehicles detected.
--->
 
 # 1. Histogram of Oriented Gradients (HOG)
 ## 1.1. HOG features and final choice of HOG parameters
