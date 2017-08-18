@@ -1,23 +1,5 @@
 Vehicle Detection Project
 --------------------------------
-TODO 
-
-- [x] HOG特徴量で SVM Classifierを学習させる
-  - [x] 他の特徴量を加えて認識率を向上させる
-  - [x] 正規化とランダマイズを確実に施す
-- [ ] sliding-window technique で車両認識を行う
-  - [x] スキャン方法と範囲を工夫して、FPと演算量を削減する
-  - [x] ☆HOG計算枠と認識の枠がズレているのを修正する
-  - [x] Perspectiveの値が実際と異なっているのを修正する 実測で → 目合せで完了
-  - [x] ゴミフィルタが機能していないのを修正する → 変数の初期化忘れ
-  - [x] スケーラの値を確認する
-  - [ ] heatmapに加算する際に、距離に応じて位置を修正する
-- [ ] ビデオファイルを作成するpipelineの説明
-  - [ ] heat mapを用いて、 outlierを除外し、見付けた車両をたどる
-  - [ ] 既検出の自動車をトラッキングしてFN/FPを削減する
-  - [ ] 目安、10FPSまで高速化する
-
-- [ ] Estimate a bounding box for vehicles detected.
 
 # 1. Histogram of Oriented Gradients (HOG)
 ## 1.1. HOG features and final choice of HOG parameters
@@ -61,14 +43,16 @@ The parameters to the hog() are as follows.
 | block_norm        | L1 (default)      |
 | visualise         | False             |
 | transform_sqrt    | False             |
-| feature_vector    | True              |
+| feature_vector    | True *            |
+
+ \* only at training process
 
 And th hog() is called with color images as follows.
 
 | parameter name    | value             |
 |:-----------------:|:-----------------:|
 | color_space       | YCrCb             |
-| hog_channel       | ALL(3channel)     |
+| hog_channel       | ALL (3ch)         |
 
 As the parameters, HOG would be calculated each 64x64 pixles images, 
 and return a float64 1D array which size is (1764,) for each image color channels.  
@@ -185,7 +169,6 @@ at line 117 - 119 in 'project_training.py' as follows.
 This function also split the dataset into training-set and test-set.
 
 ```
-
 # Split up data into randomized training and test sets
 rand_state = np.random.randint(0, 100)
 X_train, X_test, y_train, y_test = train_test_split(scaled_X, y, test_size=0.2, random_state=rand_state)
@@ -193,7 +176,8 @@ X_train, X_test, y_train, y_test = train_test_split(scaled_X, y, test_size=0.2, 
 
 ## 1.7. Training a classifier
 
-The code creates SVC Classifier with the training-set and calculates its accuracy with the test-set at line 127 - 137 in 'project_training.py' as follows.  
+The code creates SV Classifier (SVM) with the training-set and calculates its accuracy with the test-set at line 127 - 137 in 'project_training.py' as follows.  
+
 
 ```
 # Use a linear SVC
@@ -226,88 +210,192 @@ Training via SVC
 
 ## 2.1. Multi-scale search area adapting Perspective-Transforming
 
-Generally, image searching algorithms for size-unknown objects would be so heavy.
-because it must search the object inside a image a lot of time changing its search position and window size.
+Generally, image searching algorithms for size-unknown objects would be so heavy,
+because it must search the object inside a image a lot of time 
+changing its search position and window size.
 
 Regarding Automotive purpose,
-because we can assume vehicles have similar size and are on the same (or near) level surface,
-there are some relationships between vehicle's real 3D position and 2D position on the image.
+we can assume vehicles have similar size and are on the same (if the road is flat) level surface.
+Therefore searching argorithm can restrict numbers of window sizes and object positions
+using some relationships between vehicle's real 3D position and 2D position on the image.
 
-Then, I tried to reduce variety of search window sizes and count number of searching windows
-applying Perspective-Transforming that we used P4.
+Following figure shows a example of the restricted multi-scale search area.  
+When objective vehicles are forward on the same lane,
+searching argorithm can limit number of search positions and window sizes
+as each areas located red rectangles.
 
-
-vehicle's projection size on 2D images
-
- with each size according to their 3D positions from the camera,
-
-
-vehicles are projected on 2D images with each size according to their 3D positions from the camera,
-
-vehicle search windows must have multi size (multi scale) according to the position.
-
-On th P4(CarND-Advanced-Lane-Lines), we studied Camera Parameters and Perspective-Transforming
-that enable transformations between 2D image and 3D space.
-
-Here, 
+<img width=640 src="output_images/fig/project_video_0350fr_1lane.jpg">
 
 
-TODO コードを修正して書き直す
+Actually current code searches within 5 lanes width as follows.
+(After implementations to collaborate with Lane Detection, it would restrict the width more.)
+And plus, steps of distance are set non-linear but near-linear on the 2D image
+so that heat map (described later) would be uniformed.
 
+<img width=640 src="output_images/fig/project_video_0350fr_uniformly.jpg">
+
+Then the searching argorithm slides only one time(nysteps==1) with one windows size for each search areas.  
+In this case, it slides and searchs 8 time for 8 areas (leyers) as follows.
+
+<img width=640 src="output_images/fig/project_video_0350fr_uniformly-fig.jpg">
+
+These search areas are calculated at set_search_area() function in 'functions_vehicle.py' as follows.
 
 ```
-Search Area:
-  7 : (  -386.6,  +545.5) - ( +1698.4,  +545.5)
-  8 : (  -178.5,  +521.1) - ( +1473.7,  +521.1)
-  9 : (   -42.0,  +505.0) - ( +1326.3,  +505.0)
- 10 : (   +54.5,  +493.7) - ( +1222.1,  +493.7)
- 11 : (  +126.3,  +485.3) - ( +1144.5,  +485.3)
- 13 : (  +226.0,  +473.6) - ( +1036.8,  +473.6)
- 17 : (  +338.9,  +460.3) - (  +915.0,  +460.3)
- 23 : (  +422.7,  +450.5) - (  +824.4,  +450.5)
- 30 : (  +473.1,  +444.6) - (  +770.0,  +444.6)
-frameno:     0
-( 1279 x 156 ) ->  (12, 105, 2, 2, 9) float64
-( 1279 x 123 ) ->  (9, 105, 2, 2, 9) float64
-( 1279 x 102 ) ->  (7, 105, 2, 2, 9) float64
-( 1168 x 87 ) ->  (6, 96, 2, 2, 9) float64
-( 1018 x 76 ) ->  (5, 83, 2, 2, 9) float64
-( 810 x 60 ) ->  (4, 66, 2, 2, 9) float64
-( 576 x 43 ) ->  (2, 47, 2, 2, 9) float64
-( 402 x 30 ) ->  (1, 32, 2, 2, 9) float64
-( 296 x 22 ) ->  (0, 23, 2, 2, 9) float64
-   0.39 Seconds to process a image
+VIEW_WIDTH     = 3.7 * 5  # means 5 lane in meter
 
-frameno:     0
-( 1279 x 156 ) ->  (12, 105, 2, 2, 9) float64
-( 1279 x 123 ) ->  (12, 105, 2, 2, 9) float64
-( 1279 x 102 ) ->  (12, 105, 2, 2, 9) float64
-( 1168 x 87 ) ->  (12, 105, 2, 2, 9) float64
-( 1018 x 76 ) ->  (12, 105, 2, 2, 9) float64
-( 810 x 60 ) ->  (12, 105, 2, 2, 9) float64
-( 576 x 43 ) ->  (12, 105, 2, 2, 9) float64
-( 402 x 30 ) ->  (12, 105, 2, 2, 9) float64
-( 296 x 22 ) ->  (12, 105, 2, 2, 9) float64
+def set_search_area():
+
+    global M2, M2inv, search_area
+
+    perspective_2d = np.float32([[600, 440], [640, 440], [1105, 675], [295, 675]])
+    perspective_3d = np.float32([[-1.85, 40], [1.85, 40], [1.85, 5], [-1.85, 5]])
+
+    M2 = cv2.getPerspectiveTransform(perspective_3d, perspective_2d)
+    M2inv = cv2.getPerspectiveTransform(perspective_2d, perspective_3d)
+
+    search_area = []
+    for y in distance_map:
+        x = - VIEW_WIDTH / 2
+        x0 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        y0 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        #
+        x = VIEW_WIDTH / 2
+        x1 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        y1 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        #
+        search_area.append([[int(x0), int(y0)], [int(x1), int(y1)]])
 ```
 
+find_cars_multiscale() function in 'functions_vehicle.py' calls find_cars() function
+after calculates an actual search area in a valid pixel coordinate according to the 'search_area' as follows.
+
+```
+VEHICLE_HEIGHT = 1.5  # 1.65  # meter
+
+def find_cars_multiscale(image, svc, X_scaler,
+                         transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+
+    global search_area
+
+    bbox_list = []
+    for area in search_area:
+
+        width = area[1][0] - area[0][0]
+        height = int(VEHICLE_HEIGHT * width / VIEW_WIDTH)
+        scale = height / 64.0
+
+        xstart = max(area[0][0], 0)
+        xstop = min(area[1][0], 1279)
+        ystop = area[0][1]
+        ystart = ystop - height
+
+        bbox = find_cars(image, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+                         transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        if bbox:
+            bbox_list.extend(bbox)
+
+    return bbox_list
+```
 
 ## 2.2. Reusing HOG features
 
-TODO コードを修正して書き直す
+HOG feature calculation is the most heavy part in the project,
+so I embraced keeping and reusing HOG feature values.
+
+find_cars() function in 'functions_vehicle.py' scales a input image array and calculates the features as follows.
+This function is based on a lesson35 source, but modified to be applicable to single slide process.
+(because in my project input image has 64 pixle height that original function is not applicable.)
+
+Thus hog calculation count is controled once for one search area.
+
+```
+def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
+              transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+
+    img_tosearch = img[ystart:ystop, xstart:xstop, :]
+    ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
+    if scale != 1:
+        imshape = ctrans_tosearch.shape
+        ctrans_tosearch = cv2.resize(ctrans_tosearch,
+                                     (np.int(imshape[1] / scale),
+                                      np.int(imshape[0] / scale)))
+
+    ch1 = ctrans_tosearch[:, :, 0]
+    ch2 = ctrans_tosearch[:, :, 1]
+    ch3 = ctrans_tosearch[:, :, 2]
+
+    # Define blocks and steps as above
+    nxblocks = (ch1.shape[1] // pix_per_cell) - cell_per_block + 1
+    nyblocks = (ch1.shape[0] // pix_per_cell) - cell_per_block + 1
+    # nfeat_per_block = orient * cell_per_block**2
+
+    # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
+    window = 64
+    nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
+    cells_per_step = 1  # Instead of overlap, define how many cells to step
+    nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
+    nysteps = (nyblocks - nblocks_per_window) // cells_per_step
+    nysteps = max(1, nysteps)
+
+    # Compute individual channel HOG features for the entire image
+    hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
+    hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
+    hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
+
+    bbox = []
+    for xb in range(nxsteps):
+        for yb in range(nysteps):
+            ypos = yb * cells_per_step
+            xpos = xb * cells_per_step
+            # Extract HOG for this patch
+            hog_feat1 = hog1[ypos:ypos + nblocks_per_window,
+                             xpos:xpos + nblocks_per_window].ravel()
+            hog_feat2 = hog2[ypos:ypos + nblocks_per_window,
+                             xpos:xpos + nblocks_per_window].ravel()
+            hog_feat3 = hog3[ypos:ypos + nblocks_per_window,
+                             xpos:xpos + nblocks_per_window].ravel()
+            hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+
+            xleft = xpos * pix_per_cell
+            ytop = ypos * pix_per_cell
+
+            # Extract the image patch
+            subimg = cv2.resize(ctrans_tosearch[ytop:ytop + window, xleft:xleft + window], (64, 64))
+
+            # Get color features
+            spatial_features = bin_spatial(subimg, size=spatial_size)
+            hist_features = color_hist(subimg, nbins=hist_bins)
+
+            # Scale features and make a prediction
+            test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
+            test_prediction = svc.predict(test_features)
+
+            if test_prediction == 1:
+                xbox_left = np.int(xleft * scale + xstart)  # add offset
+                ytop_draw = np.int(ytop * scale)
+                win_draw = np.int(window * scale)
+                bbox.append([[xbox_left, ytop_draw + ystart],
+                             [xbox_left + win_draw, ytop_draw + win_draw + ystart]])
+
+    return bbox
+```
+
+## 2.3. Heatmap of Vehicle detection
+
+find_cars_multiscale() returns some boundary boxes that may contain a vehicle image as follows.
+
+<img width=640 src="output_images/fig/project_video_0350fr_heatmap_0.jpg">
+
+To select one boundary box for one vehicle, I took a heat-map method as following picture.  
+Heatmap is a voting space from all candidate boundary boxes, and roles like a probability distribution of vehicle existence.
+
+<img width=640 src="output_images/fig/project_video_0350fr_heatmap_1.jpg">
 
 
-<img width=400 src="output_images/fig/hog-sub.jpg">
+## 2.4. Heatmap FIFO and Outlier rejection
 
-
-## 2.3. Heatmap FIFO and Outlier rejection
-
-select_bbox_with_heatmap() function in 'functions_vehicle.py' holds a multi-frame heatmap and keeps it update as follows.  
-
-Pixels which last FRAMENUM summation value is lower than Threshold are rejected.
-Then the summated heatmap are labeld via cv2.connectedComponentsWithStats().  
-Thus, by having a multi frame heatmap, most outliers could be rejected.
-
-select_bbox_with_heatmap() returns the label number and all contour information.
+select_bbox_with_heatmap() function in 'functions_vehicle.py' holds a multi-frame heatmap and reject outliers as following code.  
 
 ```
 def select_bbox_with_heatmap(image, bbox_list, threshold=4):
@@ -320,41 +408,30 @@ def select_bbox_with_heatmap(image, bbox_list, threshold=4):
     heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
     heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
 
+    heatmap_sum = np.zeros_like(image[:, :, 0]).astype(np.uint8)
     for f in range(1, FRAMENUM):
-        heatmap_cur += heatmap_fifo[f][:][:]
+        heatmap_sum += heatmap_fifo[f][:][:]
 
-    heatmap_cur = apply_threshold(heatmap_cur, threshold)
-    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
+    heatmap_sum = apply_threshold(heatmap_sum, threshold)
+    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_sum)
 
-    return labelnum, contours
+    return labelnum, contours, centroids
 ```
 
-## 2.4. Threshold for Heatmap
+Following picture shows current candidate boundary boxes and multi-frame heatmaps.
 
-TODO 何もしない場合のHeatmapの参考画像を作る
+<img width=640 src="output_images/fig/project_video_0350fr_heatmap_2.jpg">
 
-TODO Heatmapの処理画像を作る
-
-I recorded the positions of positive detections in each frame of the
-video.  From the positive detections I created a heatmap and then
-thresholded that map to identify vehicle positions.  I then used
-`scipy.ndimage.measurements.label()` to identify individual blobs in
-the heatmap.  I then assumed each blob corresponded to a vehicle.  I
-constructed bounding boxes to cover the area of each blob detected.
-
-Here's an example result showing the heatmap from a series of frames
-of video, the result of `scipy.ndimage.measurements.label()` and the
-bounding boxes then overlaid on the last frame of video:
+Then the function takes multi frame summation, 
+rejects candidate pixles which voted number is lower than 'threshold',
+labels it via cv2.connectedComponentsWithStats().
+and returns the label number and all contour information.
 
 
+Following picture shows selected boundary box for the vehicle.
+Thus, by having a multi frame heatmap, most outliers could be rejected.
 
-
-
-## 2.5. Detected Vehicles
-
-TODO 処理画像を載せる
-
-
+<img width=640 src="output_images/fig/project_video_0350fr_heatmap_3.jpg">
 
 <!--
 <img width=400 src="output_images/fig/car-and-hog.jpg">
@@ -365,58 +442,76 @@ TODO 処理画像を載せる
 
 ## 3.1. Pipeline Details
 
-start with the test_video.mp4 and later implement on full project_video.mp4
-
-
-TODO 演算時間を載せる
-
+process_image() function in 'project_pipeline_video.py' is the pipeliine for video output.
+This function calls find_cars_multiscale() and select_bbox_with_heatmap() described above.
+Following code is vehicle detection part (excluded lane detection part).
 
 ```
 def process_image(image):
+
+    ....
 
     # 8) Vehicles Detection
     draw_img = np.copy(image)
     t1 = time.time()  # Check the training time for the SVC
 
     # 8-1) Sliding Windows Search
-    bbox_list = []
-    # bbox_list = find_cars_multiscale(image, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
     # 8-2) Update Heatmap
-    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=4)  # 6 or 7
+    labelnum, contours, centroids = select_bbox_with_heatmap(image, bbox_list, threshold=18)  # 16 - 20
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
 
-
-    # Overlay Vehicle BBoxes
-    for nlabel in range(1, labelnum): 
-        x, y, w, h, size = contours[nlabel]
-        cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
-
-    # Draw mini Heatmap
-    draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
-
+    ....
 
     return draw_img
 ```
 
 
-## 3.3. Final video Output with LaneLines Detection
+## 3.2. Final video Output with LaneLines Detection
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./output_images/project_video_out.mp4)
 
-
+This vide contains lane-detection result.
 
 
 # 4. Conclusion and Discussion
 
-## 4.1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+## 4.1 execution time
+
+This vehicles detection algorithm's execution time is from 0.3 to 0.4 second per a frame on my laptop.
+
+This improves according to some parameters like narrowing search_area and increasing overlapping of sliding window.
+Because it is trade-off with the performance of the project, I didn't take them.
+
+If reusing HOG feature between different scaled images is enable, it would be very successful.
+But I have no idea to make it in cases the scale number is not integer.
+
+## 4.2. multi-frame heatmaps cause boundary box offset
+
+Multi-frame heatmap method has great stability, 
+but also causes some offset into boundary boxes 
+because past frame heatmaps affect into the summation value.
+
+As 2nd stages detection technique,
+adding small vehicle's part detection, like break-lamps or tires, 
+may be good to improve the accuracy.
+
+## 4.3. collaboration with lane detection
+
+Not just drawing, I would like to have co-operation with lane detection.
+
+I had some trial about it, but didn't get good result yet.
+I'll implement vehicle position estimation on the road located by lane-detection.
+
+This would be useful for vehicle tracking.
 
 
-Here I'll talk about the approach I took, what techniques I used, what
-worked and why, where the pipeline might fail and how I might improve
-it if I were going to pursue this project further.
+
+EOF.
+
 
 
 

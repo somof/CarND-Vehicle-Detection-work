@@ -2,11 +2,11 @@ import cv2
 import pickle
 import numpy as np
 from moviepy.editor import VideoFileClip
-from functions_vehicle import set_perspective_matrix
+from functions_vehicle import set_search_area
 from functions_vehicle import find_cars_multiscale
 from functions_vehicle import select_bbox_with_heatmap
 from functions_vehicle import reset_hetmap_fifo
-from functions_vehicle import overlay_heatmap_fifo
+from functions_vehicle import overlay_heatmap_fifo_gaudy
 from functions_lane import *
 
 dist_pickle = pickle.load(open("wide_dist_pickle.p", "rb"))
@@ -137,10 +137,12 @@ def process_image(image):
 
     # 8) Vehicles Detection
     draw_img = undist
+
     # 8-1) Sliding Windows Search
     bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
     # 8-2) Update Heatmap
-    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=18)
+    labelnum, contours, centroids = select_bbox_with_heatmap(image, bbox_list, threshold=18)
 
     # X) Drawing
     for nlabel in range(1, labelnum):
@@ -148,7 +150,8 @@ def process_image(image):
         cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
 
     # X) Draw mini Heatmap
-    draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
+    # draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
+    draw_img = overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100))
 
 
 
@@ -205,7 +208,8 @@ Minv = cv2.getPerspectiveTransform(perspective_dst, perspective_src)
 ######################################
 # set Perspective Matrix
 
-set_perspective_matrix()
+set_search_area()
+
 ######################################
 # output to video files
 

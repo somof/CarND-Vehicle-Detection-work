@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-# from scipy.ndimage.measurements import label
 from functions_training import convert_color
 from functions_training import get_hog_features
 from functions_training import bin_spatial
@@ -18,7 +17,7 @@ heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
 
 
-def set_perspective_matrix():
+def set_search_area():
 
     global M2, M2inv, search_area
 
@@ -54,7 +53,6 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
                                      (np.int(imshape[1] / scale),
                                       np.int(imshape[0] / scale)))
 
-    # print('   shape :', ctrans_tosearch.shape)
     ch1 = ctrans_tosearch[:, :, 0]
     ch2 = ctrans_tosearch[:, :, 1]
     ch3 = ctrans_tosearch[:, :, 2]
@@ -63,7 +61,6 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
     nxblocks = (ch1.shape[1] // pix_per_cell) - cell_per_block + 1
     nyblocks = (ch1.shape[0] // pix_per_cell) - cell_per_block + 1
     # nfeat_per_block = orient * cell_per_block**2
-    # print('  nyblocks: ', nyblocks)
 
     # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
     window = 64
@@ -72,15 +69,11 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step
     nysteps = max(1, nysteps)
-    # print('  nyblocks: ', nyblocks)
 
     # Compute individual channel HOG features for the entire image
     hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
     hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
     hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, transform_sqrt=transform_sqrt, feature_vec=False)
-    # print('(', xstop - xstart, 'x', ystop - ystart, ') -> ', hog1.shape, hog1.dtype)
-
-    # print('    step : {} x {}'.format(nxsteps, nysteps))
 
     bbox = []
     for xb in range(nxsteps):
@@ -127,7 +120,6 @@ def find_cars_multiscale(image, svc, X_scaler,
 
     bbox_list = []
     for area in search_area:
-        # print('  area ({:+8.1f},{:+8.1f}) - ({:+8.1f},{:+8.1f})'.format(area[0][0], area[0][1], area[1][0], area[1][1]))
 
         width = area[1][0] - area[0][0]
         height = int(VEHICLE_HEIGHT * width / VIEW_WIDTH)
@@ -138,8 +130,6 @@ def find_cars_multiscale(image, svc, X_scaler,
         ystop = area[0][1]
         ystart = ystop - height
 
-        # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
-        # print('  scale: {:4.2f}'.format(scale))
         bbox = find_cars(image, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
                          transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         if bbox:
@@ -162,7 +152,6 @@ def overlay_search_area(draw_img):
         ystop = area[0][1]
         ystart = ystop - height
 
-        # print('baseline: ({:4.0f}, {:4.0f}) - ({:4.0f}, {:4.0f})  <- '.format(xstart, ystart, xstop, ystop), area)
         cv2.rectangle(draw_img, (xstart, ystart), (xstop, ystop), (255, 0, 0), 1)
 
     return draw_img
@@ -218,27 +207,57 @@ def select_bbox_with_heatmap(image, bbox_list, threshold=4):
     heatmap_fifo[1:FRAMENUM, :, :] = heatmap_fifo[0:FRAMENUM - 1, :, :]
     heatmap_fifo[0][:][:] = np.copy(heatmap_cur)
 
+    heatmap_sum = np.zeros_like(image[:, :, 0]).astype(np.uint8)
     for f in range(1, FRAMENUM):
-        heatmap_cur += heatmap_fifo[f][:][:]
+        heatmap_sum += heatmap_fifo[f][:][:]
 
-    heatmap_cur = apply_threshold(heatmap_cur, threshold)
-    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_cur)
+    heatmap_sum = apply_threshold(heatmap_sum, threshold)
+    labelnum, labelimg, contours, centroids = cv2.connectedComponentsWithStats(heatmap_sum)
 
-    return labelnum, contours
+    return labelnum, contours, centroids
 
 
 def overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100)):
 
     font_size = 0.5
-    font = cv2.FONT_HERSHEY_DUPLEX
     font = cv2.FONT_HERSHEY_COMPLEX
-
     for f in range(FRAMENUM):
         cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
-        mini = np.clip(heatmap_fifo[f] * 4 + 10, 20, 255)
+        mini = np.clip(heatmap_fifo[f] * 4 - 1, 0, 255)
         mini = cv2.resize(mini, size, interpolation=cv2.INTER_NEAREST)
-        mini = cv2.cvtColor(mini, cv2.COLOR_GRAY2RGB)
+        mini = cv2.applyColorMap(mini, cv2.COLORMAP_JET)
         draw_img[py:py + mini.shape[0], px:px + mini.shape[1]] = mini
         px += mini.shape[1] + 10
+
+    return draw_img
+
+
+def overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100)):
+
+    font_size = 0.75
+    font = cv2.FONT_HERSHEY_COMPLEX
+
+    cv2.putText(draw_img, 'original', (px, py - 10), font, font_size, (255, 255, 255))
+    img = cv2.resize(image, size, interpolation=cv2.INTER_LINEAR)
+    draw_img[py:py + img.shape[0], px:px + img.shape[1]] = img
+    px += img.shape[1] + 10
+
+    for f in range(FRAMENUM):
+
+        mini = np.clip(heatmap_fifo[f] * 4 - 1, 0, 255)
+        mini = cv2.resize(mini, size, interpolation=cv2.INTER_NEAREST)
+        mini = cv2.applyColorMap(mini, cv2.COLORMAP_JET)
+
+        gray = cv2.cvtColor(mini, cv2.COLOR_RGB2GRAY)
+        ret, mask = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
+        mask_inv = cv2.bitwise_not(mask)
+
+        img1_bg = cv2.bitwise_and(img, img, mask = mask_inv)
+        img2_fg = cv2.bitwise_and(mini, mini, mask = mask)
+        heat = cv2.add(img1_bg, img2_fg)
+
+        cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
+        draw_img[py:py + heat.shape[0], px:px + heat.shape[1]] = heat
+        px += heat.shape[1] + 10
 
     return draw_img
