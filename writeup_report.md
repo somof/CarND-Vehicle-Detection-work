@@ -224,7 +224,33 @@ Training via SVC
 
 # 2. Sliding Window Search
 
-## 2.1. Multi-scale search area
+## 2.1. Multi-scale search area adapting Perspective-Transforming
+
+Generally, image searching algorithms for size-unknown objects would be so heavy.
+because it must search the object inside a image a lot of time changing its search position and window size.
+
+Regarding Automotive purpose,
+because we can assume vehicles have similar size and are on the same (or near) level surface,
+there are some relationships between vehicle's real 3D position and 2D position on the image.
+
+Then, I tried to reduce variety of search window sizes and count number of searching windows
+applying Perspective-Transforming that we used P4.
+
+
+vehicle's projection size on 2D images
+
+ with each size according to their 3D positions from the camera,
+
+
+vehicles are projected on 2D images with each size according to their 3D positions from the camera,
+
+vehicle search windows must have multi size (multi scale) according to the position.
+
+On th P4(CarND-Advanced-Lane-Lines), we studied Camera Parameters and Perspective-Transforming
+that enable transformations between 2D image and 3D space.
+
+Here, 
+
 
 TODO コードを修正して書き直す
 
