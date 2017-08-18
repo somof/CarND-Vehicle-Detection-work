@@ -488,7 +488,7 @@ def process_image(image):
 
 ## 3.2. Final video Output with LaneLines Detection
 
-Here's a [link to my video result](./output_images/project_video.mp4)
+Here's a [link to my video result](./output_images/project_video_out.mp4)
 
 
 # 4. Conclusion and Discussion
