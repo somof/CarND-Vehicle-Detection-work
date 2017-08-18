@@ -195,7 +195,8 @@ X_train, X_test, y_train, y_test = train_test_split(scaled_X, y, test_size=0.2, 
 
 ## 1.7. Training a classifier
 
-The code creates SVC Classifier with the training-set and calculates its accuracy with the test-set at line 127 - 137 in 'project_training.py' as follows.  
+The code creates SV Classifier (SVM) with the training-set and calculates its accuracy with the test-set at line 127 - 137 in 'project_training.py' as follows.  
+
 
 ```
 # Use a linear SVC

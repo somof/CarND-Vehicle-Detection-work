@@ -81,12 +81,12 @@ def process_image(image):
     # draw_img = cv2.addWeighted(draw_img, 0.5, tmp_heatmap, 0.5, 0)
 
     # X) Overlay Vehicle BBoxes
-    for nlabel in range(1, labelnum):
-        x, y, w, h, size = contours[nlabel]
-        xg, yg = centroids[nlabel]
-        cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
-        cv2.circle(draw_img, (int(xg), int(yg)), 30, (0, 0, 255), -1)
-        cv2.putText(draw_img, '{}'.format(nlabel), (int(xg - 10), int(yg + 10)), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
+    # for nlabel in range(1, labelnum):
+    #     x, y, w, h, size = contours[nlabel]
+    #     xg, yg = centroids[nlabel]
+    #     cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
+    #     cv2.circle(draw_img, (int(xg), int(yg)), 30, (0, 0, 255), -1)
+    #     cv2.putText(draw_img, '{}'.format(nlabel), (int(xg - 10), int(yg + 10)), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
 
     # X) Draw mini Heatmap
     draw_img = overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100))
@@ -139,8 +139,8 @@ for frame in clip1.iter_frames():
         if frameno == 350:
             filename = '{}_{:04.0f}fr.jpg'.format('project_video', frameno)
             # if not os.path.exists(filename):
-            # cv2.imwrite(filename, img)
-            cv2.imwrite(filename, img[300:720, :, :])
+            cv2.imwrite(filename, img)
+            # cv2.imwrite(filename, img[300:720, :, :])
             cv2.waitKey(1000)
             exit(0)
     frameno += 1

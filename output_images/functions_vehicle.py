@@ -234,7 +234,7 @@ def overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100)):
 
 def overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100)):
 
-    font_size = 0.5
+    font_size = 0.75
     font = cv2.FONT_HERSHEY_COMPLEX
 
     cv2.putText(draw_img, 'original', (px, py - 10), font, font_size, (255, 255, 255))
@@ -256,7 +256,7 @@ def overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100)):
         img2_fg = cv2.bitwise_and(mini, mini, mask = mask)
         heat = cv2.add(img1_bg, img2_fg)
 
-        cv2.putText(draw_img, 'Heatmap {}'.format(-f), (px, py - 10), font, font_size, (255, 255, 255))
+        cv2.putText(draw_img, 'Heatmap {}'.format(f), (px, py - 10), font, font_size, (255, 255, 255))
         draw_img[py:py + heat.shape[0], px:px + heat.shape[1]] = heat
         px += heat.shape[1] + 10
 
