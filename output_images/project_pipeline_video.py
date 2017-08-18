@@ -6,7 +6,7 @@ from functions_vehicle import set_search_area
 from functions_vehicle import find_cars_multiscale
 from functions_vehicle import select_bbox_with_heatmap
 from functions_vehicle import reset_hetmap_fifo
-from functions_vehicle import overlay_heatmap_fifo
+from functions_vehicle import overlay_heatmap_fifo_gaudy
 from functions_lane import *
 
 dist_pickle = pickle.load(open("wide_dist_pickle.p", "rb"))
@@ -150,7 +150,8 @@ def process_image(image):
         cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
 
     # X) Draw mini Heatmap
-    draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
+    # draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
+    draw_img = overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100))
 
 
 

@@ -252,6 +252,37 @@ def overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100)):
     return draw_img
 
 
+def overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100)):
+
+    font_size = 0.5
+    font = cv2.FONT_HERSHEY_COMPLEX
+
+    cv2.putText(draw_img, 'original', (px, py - 10), font, font_size, (255, 255, 255))
+    img = cv2.resize(image, size, interpolation=cv2.INTER_LINEAR)
+    draw_img[py:py + img.shape[0], px:px + img.shape[1]] = img
+    px += img.shape[1] + 10
+
+    for f in range(FRAMENUM):
+
+        mini = np.clip(heatmap_fifo[f] * 4 - 1, 0, 255)
+        mini = cv2.resize(mini, size, interpolation=cv2.INTER_NEAREST)
+        mini = cv2.applyColorMap(mini, cv2.COLORMAP_JET)
+
+        gray = cv2.cvtColor(mini, cv2.COLOR_RGB2GRAY)
+        ret, mask = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
+        mask_inv = cv2.bitwise_not(mask)
+
+        img1_bg = cv2.bitwise_and(img, img, mask = mask_inv)
+        img2_fg = cv2.bitwise_and(mini, mini, mask = mask)
+        heat = cv2.add(img1_bg, img2_fg)
+
+        cv2.putText(draw_img, 'Heatmap {}'.format(-f), (px, py - 10), font, font_size, (255, 255, 255))
+        draw_img[py:py + heat.shape[0], px:px + heat.shape[1]] = heat
+        px += heat.shape[1] + 10
+
+    return draw_img
+
+
 def reset_car_positions():
     car_positions = np.zeros((FRAMENUM, int(max(distance_map)), LANENUM), dtype=np.uint8)
 

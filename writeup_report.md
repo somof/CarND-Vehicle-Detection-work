@@ -62,14 +62,16 @@ The parameters to the hog() are as follows.
 | block_norm        | L1 (default)      |
 | visualise         | False             |
 | transform_sqrt    | False             |
-| feature_vector    | True              |
+| feature_vector    | True *            |
+
+ \* only at training process
 
 And th hog() is called with color images as follows.
 
 | parameter name    | value             |
 |:-----------------:|:-----------------:|
 | color_space       | YCrCb             |
-| hog_channel       | ALL(3channel)     |
+| hog_channel       | ALL (3ch)         |
 
 As the parameters, HOG would be calculated each 64x64 pixles images, 
 and return a float64 1D array which size is (1764,) for each image color channels.  
@@ -459,8 +461,8 @@ Thus, by having a multi frame heatmap, most outliers could be rejected.
 ## 3.1. Pipeline Details
 
 process_image() function in 'project_pipeline_video.py' is the pipeliine for video output.
-This function calls find_cars_multiscale() and select_bbox_with_heatmap() described above.  
-Following code is vehicle detection part (excluded lane detection part)
+This function calls find_cars_multiscale() and select_bbox_with_heatmap() described above.
+Following code is vehicle detection part (excluded lane detection part).
 
 ```
 def process_image(image):
@@ -490,23 +492,45 @@ def process_image(image):
 
 Here's a [link to my video result](./output_images/project_video_out.mp4)
 
+This vide contains lane-detection result.
+
 
 # 4. Conclusion and Discussion
 
-## 4.1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+## 4.1 execution time
+
+This vehicles detection algorithm's execution time is from 0.3 to 0.4 second per a frame on my laptop.
+
+This improves according to some parameters like narrowing search_area and increasing overlapping of sliding window.
+Because it is trade-off with the performance of the project, I didn't take them.
+
+If reusing HOG feature between different scaled images is enable, it would be very successful.
+But I have no idea to make it in cases the scale number is not integer.
+
+## 4.2. multi-frame heatmaps cause boundary box offset
+
+Multi-frame heatmap method has great stability, 
+but also causes some offset into boundary boxes 
+because past frame heatmaps affect into the summation value.
+
+As 2nd stages detection technique,
+adding small vehicle's part detection, like break-lamps or tires, 
+may be good to improve the accuracy.
+
+## 4.3. collaboration with lane detection
+
+Not just drawing, I would like to have co-operation with lane detection.
+
+I had some trial about it, but didn't get good result yet.
+I'll implement vehicle position estimation on the road located by lane-detection.
+
+This would be useful for vehicle tracking.
 
 
-speed
 
-boundary box 
+EOF.
 
-offset 
 
-2 stage 
-
-car positions
-
-threshold
 
 
 <!--

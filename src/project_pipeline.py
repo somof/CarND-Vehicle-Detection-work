@@ -9,6 +9,7 @@ from functions_vehicle import find_cars_multiscale
 from functions_vehicle import select_bbox_with_heatmap
 from functions_vehicle import reset_hetmap_fifo
 from functions_vehicle import overlay_heatmap_fifo
+from functions_vehicle import overlay_heatmap_fifo_gaudy
 from functions_vehicle import overlay_search_area
 from functions_vehicle import reset_car_positions
 from functions_vehicle import hold_car_positions
@@ -68,28 +69,28 @@ def process_image(image):
 
     # X) Drawing
     # display search area
-    # draw_img = overlay_search_area(draw_img)
+    draw_img = overlay_search_area(draw_img)
 
     # display each detected bboxes
-    tmp_heatmap = np.zeros(draw_img.shape)
+    # tmp_heatmap = np.zeros(draw_img.shape)
     for bbox in bbox_list:
         # print('bbox: ', bbox)
-        # cv2.rectangle(draw_img, tuple(bbox[0]), tuple(bbox[1]), (0, 255, 255), 1)
-        tmp_heatmap[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0], 0] += 40
-
-    tmp_heatmap = np.clip(tmp_heatmap, 0, 255).astype(np.uint8)
-    draw_img = cv2.addWeighted(draw_img, 0.5, tmp_heatmap, 0.5, 0)
+        cv2.rectangle(draw_img, tuple(bbox[0]), tuple(bbox[1]), (0, 255, 255), 1)
+        # tmp_heatmap[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0], 0] += 40
+    # tmp_heatmap = np.clip(tmp_heatmap, 0, 255).astype(np.uint8)
+    # draw_img = cv2.addWeighted(draw_img, 0.5, tmp_heatmap, 0.5, 0)
 
     # X) Overlay Vehicle BBoxes
-    # for nlabel in range(1, labelnum):
-    #     x, y, w, h, size = contours[nlabel]
-    #     xg, yg = centroids[nlabel]
-    #     cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
-    #     cv2.circle(draw_img, (int(xg), int(yg)), 30, (0, 0, 255), -1)
-    #     cv2.putText(draw_img, '{}'.format(nlabel), (int(xg - 10), int(yg + 10)), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
+    for nlabel in range(1, labelnum):
+        x, y, w, h, size = contours[nlabel]
+        xg, yg = centroids[nlabel]
+        cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
+        cv2.circle(draw_img, (int(xg), int(yg)), 30, (0, 0, 255), -1)
+        cv2.putText(draw_img, '{}'.format(nlabel), (int(xg - 10), int(yg + 10)), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
 
     # X) Draw mini Heatmap
-    draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
+    draw_img = overlay_heatmap_fifo_gaudy(draw_img, image, px=10, py=90, size=(180, 100))
+    # draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
     # draw_img = draw_car_positions(draw_img, px=1000, py=90)
 
     return draw_img
