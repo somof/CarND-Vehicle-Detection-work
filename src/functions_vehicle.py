@@ -18,7 +18,7 @@ heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
 
 
-def set_perspective_matrix():
+def set_search_area():
 
     global M2, M2inv, search_area
 
@@ -69,7 +69,7 @@ def find_cars(img, ystart, ystop, xstart, xstop, scale, svc, X_scaler,
     # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
     window = 64
     nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
-    cells_per_step = 1  # Instead of overlap, define how many cells to step
+    cells_per_step = 2  # Instead of overlap, define how many cells to step
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step
     nysteps = max(1, nysteps)

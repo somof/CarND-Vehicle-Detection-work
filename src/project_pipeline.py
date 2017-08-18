@@ -4,7 +4,7 @@ import pickle
 import time
 import numpy as np
 from moviepy.editor import VideoFileClip
-from functions_vehicle import set_perspective_matrix
+from functions_vehicle import set_search_area
 from functions_vehicle import find_cars_multiscale
 from functions_vehicle import select_bbox_with_heatmap
 from functions_vehicle import reset_hetmap_fifo
@@ -53,10 +53,10 @@ def process_image(image):
 
     # 8-1) Sliding Windows Search
     bbox_list = []
-    bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    # bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
     # 8-2) Update Heatmap
-    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=16)  # 6 or 7
+    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=16)  # 16 - 20
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
@@ -74,6 +74,7 @@ def process_image(image):
     for nlabel in range(1, labelnum):
         x, y, w, h, size = contours[nlabel]
         cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
+        cv2.putText(draw_img, 'car {}'.format(nlabel), (x, y), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 255, 255))
 
     # X) Draw mini Heatmap
     draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
@@ -84,29 +85,29 @@ def process_image(image):
 ######################################
 # set Perspective Matrix
 
-set_perspective_matrix()
+set_search_area()
 
 
 ######################################
 # process frame by frame for developing
 
-clip1 = VideoFileClip('../test_video.mp4')
-frameno = 0
-reset_hetmap_fifo()
-for frame in clip1.iter_frames():
-    if frameno % 2 == 0:
-        print('frameno: {:5.0f}'.format(frameno))
-        result = process_image(frame)
-        img = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
-        cv2.imshow('frame', img)
-        if frameno % 10 == 0:
-            filename = '{}_{:04.0f}fr.jpg'.format('test_video', frameno)
-            # if not os.path.exists(filename):
-            # cv2.imwrite(filename, img)
-    frameno += 1
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-cv2.destroyAllWindows()
+# clip1 = VideoFileClip('../test_video.mp4')
+# frameno = 0
+# reset_hetmap_fifo()
+# for frame in clip1.iter_frames():
+#     if frameno % 2 == 0:
+#         print('frameno: {:5.0f}'.format(frameno))
+#         result = process_image(frame)
+#         img = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+#         cv2.imshow('frame', img)
+#         if frameno % 10 == 0:
+#             filename = '{}_{:04.0f}fr.jpg'.format('test_video', frameno)
+#             # if not os.path.exists(filename):
+#             # cv2.imwrite(filename, img)
+#     frameno += 1
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+# cv2.destroyAllWindows()
 
 
 clip1 = VideoFileClip('../project_video.mp4')
@@ -122,9 +123,9 @@ for frame in clip1.iter_frames():
         if frameno == 350:
             filename = '{}_{:04.0f}fr.jpg'.format('project_video', frameno)
             # if not os.path.exists(filename):
-            # cv2.imwrite(filename, img[300:720, :, :])
-            # cv2.waitKey(1000)
-            # exit(0)
+            cv2.imwrite(filename, img[300:720, :, :])
+            cv2.waitKey(1000)
+            exit(0)
     frameno += 1
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

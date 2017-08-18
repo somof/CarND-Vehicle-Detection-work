@@ -1,23 +1,24 @@
 Vehicle Detection Project
 --------------------------------
+<!--
 TODO 
 
 - [x] HOG特徴量で SVM Classifierを学習させる
   - [x] 他の特徴量を加えて認識率を向上させる
   - [x] 正規化とランダマイズを確実に施す
-- [ ] sliding-window technique で車両認識を行う
+- [x] sliding-window technique で車両認識を行う
   - [x] スキャン方法と範囲を工夫して、FPと演算量を削減する
   - [x] ☆HOG計算枠と認識の枠がズレているのを修正する
   - [x] Perspectiveの値が実際と異なっているのを修正する 実測で → 目合せで完了
   - [x] ゴミフィルタが機能していないのを修正する → 変数の初期化忘れ
   - [x] スケーラの値を確認する
-  - [ ] heatmapに加算する際に、距離に応じて位置を修正する
+  - [x] heatmapに加算する際に、距離に応じて位置を修正する
 - [ ] ビデオファイルを作成するpipelineの説明
   - [ ] heat mapを用いて、 outlierを除外し、見付けた車両をたどる
   - [ ] 既検出の自動車をトラッキングしてFN/FPを削減する
   - [ ] 目安、10FPSまで高速化する
-
 - [ ] Estimate a bounding box for vehicles detected.
+-->
 
 # 1. Histogram of Oriented Gradients (HOG)
 ## 1.1. HOG features and final choice of HOG parameters
@@ -185,7 +186,6 @@ at line 117 - 119 in 'project_training.py' as follows.
 This function also split the dataset into training-set and test-set.
 
 ```
-
 # Split up data into randomized training and test sets
 rand_state = np.random.randint(0, 100)
 X_train, X_test, y_train, y_test = train_test_split(scaled_X, y, test_size=0.2, random_state=rand_state)
@@ -226,12 +226,74 @@ Training via SVC
 
 ## 2.1. Multi-scale search area adapting Perspective-Transforming
 
-Generally, image searching algorithms for size-unknown objects would be so heavy.
-because it must search the object inside a image a lot of time changing its search position and window size.
+Generally, image searching algorithms for size-unknown objects would be so heavy,
+because it must search the object inside a image a lot of time 
+changing its search position and window size.
 
 Regarding Automotive purpose,
-because we can assume vehicles have similar size and are on the same (or near) level surface,
-there are some relationships between vehicle's real 3D position and 2D position on the image.
+we can assume vehicles have similar size and are on the same (if the road is flat) level surface.
+Therefore searching argorithm can restrict numbers of window sizes and object positions
+using some relationships between vehicle's real 3D position and 2D position on the image.
+
+Following figure shows a example of the restricted multi-scale search area.  
+When objective vehicles are forward on the same lane,
+searching argorithm can limit number of search positions and window sizes
+as each areas located red rectangles.
+
+<img width=640 src="output_images/fig/project_video_0350fr_1lane.jpg">
+
+
+Actually current code searches within 5 lanes width as follows.
+(After implementations to collaborate with Lane Detection, it would restrict the width more.)
+
+And plus, steps of distance are set non-linear but near-linear on the 2D image
+so that heat map (described later) would be uniformed.
+
+<img width=640 src="output_images/fig/project_video_0350fr_uniformly.jpg">
+
+Then the searching argorithm slide only one time with one windows size for each search areas.  
+In this case, it slides and searchs 8 time for 8 areas (leyers) as follows.
+
+<img width=640 src="output_images/fig/project_video_0350fr_uniformly-fig.jpg">
+
+This search area is calculated by set_perspective_matrix() function in 'functions_vehicle.py' as follows.
+
+```
+VIEW_WIDTH     = 3.7 * 5  # means 5 lane in meter
+
+def set_perspective_matrix():
+
+    global M2, M2inv, search_area
+
+    perspective_2d = np.float32([[600, 440], [640, 440], [1105, 675], [295, 675]])
+    perspective_3d = np.float32([[-1.85, 40], [1.85, 40], [1.85, 5], [-1.85, 5]])
+
+    M2 = cv2.getPerspectiveTransform(perspective_3d, perspective_2d)
+    M2inv = cv2.getPerspectiveTransform(perspective_2d, perspective_3d)
+
+    search_area = []
+    for y in distance_map:
+        x = - VIEW_WIDTH / 2
+        x0 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        y0 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        #
+        x = VIEW_WIDTH / 2
+        x1 = (M2[0][0] * x + M2[0][1] * y + M2[0][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        y1 = (M2[1][0] * x + M2[1][1] * y + M2[1][2]) / (M2[2][0] * x + M2[2][1] * y + M2[2][2])
+        #
+        search_area.append([[int(x0), int(y0)], [int(x1), int(y1)]])
+```
+
+On th P4(CarND-Advanced-Lane-Lines), we studied Camera Parameters and Perspective-Transforming
+that enable transformations between 2D image and 3D space.
+
+
+
+
+for each search area
+
+in front of the view camera and 
+same lane
 
 Then, I tried to reduce variety of search window sizes and count number of searching windows
 applying Perspective-Transforming that we used P4.
@@ -246,8 +308,6 @@ vehicles are projected on 2D images with each size according to their 3D positio
 
 vehicle search windows must have multi size (multi scale) according to the position.
 
-On th P4(CarND-Advanced-Lane-Lines), we studied Camera Parameters and Perspective-Transforming
-that enable transformations between 2D image and 3D space.
 
 Here, 
 

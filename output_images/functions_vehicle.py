@@ -18,7 +18,7 @@ heatmap_fifo = np.zeros((FRAMENUM, 720, 1280), dtype=np.uint8)
 distance_map = (6.6, 7.2, 8, 9, 10.5, 13, 18)
 
 
-def set_perspective_matrix():
+def set_search_area():
 
     global M2, M2inv, search_area
 

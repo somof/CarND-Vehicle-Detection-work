@@ -2,7 +2,7 @@ import cv2
 import pickle
 import numpy as np
 from moviepy.editor import VideoFileClip
-from functions_vehicle import set_perspective_matrix
+from functions_vehicle import set_search_area
 from functions_vehicle import find_cars_multiscale
 from functions_vehicle import select_bbox_with_heatmap
 from functions_vehicle import reset_hetmap_fifo
