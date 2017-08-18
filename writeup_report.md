@@ -458,61 +458,37 @@ Thus, by having a multi frame heatmap, most outliers could be rejected.
 
 ## 3.1. Pipeline Details
 
-
-Here's a [link to my video result](./project_video.mp4)
-
-https://github.com/somof/CarND-Vehicle-Detection-work/tree/master/output_images
-
-https://github.com/somof/CarND-Advanced-Lane-Lines-work/
-https://github.com/somof/CarND-Advanced-Lane-Lines-work/output_images/project_video.mp4
-https://github.com/somof/CarND-Advanced-Lane-Lines-work/output_images/project_video.mp4
-
-
-
-project_pipeline_video.py
-
-start with the test_video.mp4 and later implement on full project_video.mp4
-
-
-TODO 演算時間を載せる
-
+process_image() function in 'project_pipeline_video.py' is the pipeliine for video output.
+This function calls find_cars_multiscale() and select_bbox_with_heatmap() described above.  
+Following code is vehicle detection part (excluded lane detection part)
 
 ```
 def process_image(image):
+
+    ....
 
     # 8) Vehicles Detection
     draw_img = np.copy(image)
     t1 = time.time()  # Check the training time for the SVC
 
     # 8-1) Sliding Windows Search
-    bbox_list = []
-    # bbox_list = find_cars_multiscale(image, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
     # 8-2) Update Heatmap
-    labelnum, contours = select_bbox_with_heatmap(image, bbox_list, threshold=4)  # 6 or 7
+    labelnum, contours, centroids = select_bbox_with_heatmap(image, bbox_list, threshold=18)  # 16 - 20
 
     t2 = time.time()
     print('  ', round(t2 - t1, 2), 'Seconds to process a image')
 
-
-    # Overlay Vehicle BBoxes
-    for nlabel in range(1, labelnum): 
-        x, y, w, h, size = contours[nlabel]
-        cv2.rectangle(draw_img, (x, y), (x + w, y + h), (0, 0, 255), 5)
-
-    # Draw mini Heatmap
-    draw_img = overlay_heatmap_fifo(draw_img, px=10, py=90, size=(180, 100))
-
+    ....
 
     return draw_img
 ```
 
 
-## 3.3. Final video Output with LaneLines Detection
+## 3.2. Final video Output with LaneLines Detection
 
-Here's a [link to my video result](./project_video.mp4)
-
-
+Here's a [link to my video result](./output_images/project_video.mp4)
 
 
 # 4. Conclusion and Discussion
@@ -520,10 +496,17 @@ Here's a [link to my video result](./project_video.mp4)
 ## 4.1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 
-Here I'll talk about the approach I took, what techniques I used, what
-worked and why, where the pipeline might fail and how I might improve
-it if I were going to pursue this project further.
+speed
 
+boundary box 
+
+offset 
+
+2 stage 
+
+car positions
+
+threshold
 
 
 <!--

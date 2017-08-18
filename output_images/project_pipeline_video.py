@@ -137,8 +137,10 @@ def process_image(image):
 
     # 8) Vehicles Detection
     draw_img = undist
+
     # 8-1) Sliding Windows Search
     bbox_list = find_cars_multiscale(image, svc, X_scaler, transform_sqrt, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
     # 8-2) Update Heatmap
     labelnum, contours, centroids = select_bbox_with_heatmap(image, bbox_list, threshold=18)
 
